@@ -1,0 +1,2386 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorldForge 世界鑄造所</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&family=Noto+Sans+TC:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   THEME VARIABLES
+═══════════════════════════════════════════ */
+:root {
+  --fs: 15px;
+  /* Dark parchment theme (default) */
+  --bg-deep:    #0f0d0a;
+  --bg-base:    #17140f;
+  --bg-surface: #1f1a12;
+  --bg-raised:  #2a2318;
+  --bg-hover:   #332b1e;
+  --border:     rgba(195,148,60,0.18);
+  --border-md:  rgba(195,148,60,0.32);
+  --border-hi:  rgba(195,148,60,0.55);
+  --gold:       #c8963c;
+  --gold-lt:    #e6b45a;
+  --gold-dim:   rgba(200,150,60,0.55);
+  --crimson:    #a03030;
+  --teal:       #2e7d6e;
+  --text-1:     #f0e8d8;
+  --text-2:     #b8a88a;
+  --text-3:     #7a6a52;
+  --input-bg:   rgba(15,12,8,0.6);
+  --panel-bg:   rgba(31,26,18,0.96);
+  --shadow:     0 4px 32px rgba(0,0,0,0.45);
+  --shadow-sm:  0 2px 12px rgba(0,0,0,0.35);
+  --radius:     4px;
+  --scrollbar:  rgba(195,148,60,0.2);
+}
+[data-theme="light"] {
+  --bg-deep:    #e8e0d0;
+  --bg-base:    #f2ece0;
+  --bg-surface: #f8f2e5;
+  --bg-raised:  #fff9ee;
+  --bg-hover:   #fff3d8;
+  --border:     rgba(150,100,30,0.18);
+  --border-md:  rgba(150,100,30,0.28);
+  --border-hi:  rgba(150,100,30,0.5);
+  --gold:       #a07020;
+  --gold-lt:    #c89030;
+  --gold-dim:   rgba(160,112,32,0.5);
+  --text-1:     #1a140a;
+  --text-2:     #5a4a2a;
+  --text-3:     #9a8060;
+  --input-bg:   rgba(255,255,255,0.7);
+  --panel-bg:   rgba(252,246,234,0.97);
+  --shadow:     0 4px 32px rgba(0,0,0,0.12);
+  --shadow-sm:  0 2px 12px rgba(0,0,0,0.08);
+  --scrollbar:  rgba(150,100,30,0.2);
+}
+[data-theme="sepia"] {
+  --bg-deep:    #261a0a;
+  --bg-base:    #2f2010;
+  --bg-surface: #3a2a15;
+  --bg-raised:  #46331a;
+  --bg-hover:   #523c20;
+  --border:     rgba(210,165,80,0.2);
+  --border-md:  rgba(210,165,80,0.35);
+  --border-hi:  rgba(210,165,80,0.6);
+  --gold:       #d4a044;
+  --gold-lt:    #eabb60;
+  --text-1:     #f5e8cc;
+  --text-2:     #c8a870;
+  --text-3:     #8a6a3a;
+  --input-bg:   rgba(20,14,6,0.5);
+  --panel-bg:   rgba(46,33,16,0.97);
+  --scrollbar:  rgba(210,165,80,0.2);
+}
+
+/* ═══════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: var(--fs); }
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-1);
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.3s, color 0.3s;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+* { scrollbar-width: thin; scrollbar-color: var(--scrollbar) transparent; }
+
+/* ═══════════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════════ */
+#topbar {
+  height: 48px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  gap: 0;
+  flex-shrink: 0;
+  z-index: 200;
+}
+.brand {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  margin-right: 2rem;
+  white-space: nowrap;
+}
+.brand span { opacity: 0.5; font-weight: 400; font-size: 0.8rem; margin-left: 0.4rem; }
+.top-tabs { display: flex; gap: 0; flex: 1; }
+.top-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-3);
+  font-family: 'Noto Serif TC', serif;
+  font-size: 0.88rem;
+  padding: 0 1.25rem;
+  height: 48px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.top-tab:hover { color: var(--text-2); }
+.top-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* ═══════════════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════════════════ */
+#app { display: flex; flex: 1; overflow: hidden; }
+
+/* PAGES */
+.page { display: none; flex: 1; overflow: hidden; }
+.page.active { display: flex; }
+
+/* ═══════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════ */
+.sidebar {
+  width: 220px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.sidebar-section { padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+.sidebar-label {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0 0.9rem;
+  margin-bottom: 0.35rem;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.42rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-2);
+  border-left: 2px solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.sidebar-item:hover { background: var(--bg-hover); color: var(--text-1); }
+.sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--bg-hover); }
+.sidebar-item .si-icon { font-size: 0.9rem; width: 1.1rem; text-align: center; }
+.sidebar-item .si-count {
+  margin-left: auto;
+  font-size: 0.68rem;
+  color: var(--text-3);
+  background: var(--bg-raised);
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+}
+.sidebar-add {
+  margin: 0.5rem 0.9rem;
+  background: none;
+  border: 1px dashed var(--border-md);
+  border-radius: var(--radius);
+  color: var(--text-3);
+  font-size: 0.78rem;
+  padding: 0.35rem;
+  width: calc(100% - 1.8rem);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sidebar-add:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+/* ═══════════════════════════════════════════
+   CONTENT AREA
+═══════════════════════════════════════════ */
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+.content-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+.content-panel {
+  width: 300px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════
+   PANEL HEADERS
+═══════════════════════════════════════════ */
+.panel-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.panel-header h2 {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+.panel-header .ph-actions { display: flex; gap: 0.4rem; }
+
+/* ═══════════════════════════════════════════
+   TYPOGRAPHY
+═══════════════════════════════════════════ */
+h1 { font-family: 'Noto Serif TC', serif; font-size: 1.5rem; font-weight: 700; color: var(--text-1); }
+h2 { font-family: 'Noto Serif TC', serif; font-size: 1.15rem; font-weight: 700; color: var(--text-1); }
+h3 { font-family: 'Noto Serif TC', serif; font-size: 0.95rem; font-weight: 500; color: var(--text-2); }
+
+/* ═══════════════════════════════════════════
+   FORM ELEMENTS
+═══════════════════════════════════════════ */
+.field { margin-bottom: 0.85rem; }
+.field:last-child { margin-bottom: 0; }
+label, .field-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.3rem;
+}
+input[type=text], input[type=number], textarea, select {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.7rem;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.85rem;
+  color: var(--text-1);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus {
+  border-color: var(--gold-dim);
+  background: var(--bg-raised);
+}
+select option { background: var(--bg-surface); }
+textarea { resize: vertical; min-height: 72px; line-height: 1.7; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem; }
+
+/* ═══════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════ */
+.btn {
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.btn-primary {
+  background: var(--gold);
+  color: #fff;
+  border: 1px solid var(--gold);
+}
+.btn-primary:hover { background: var(--gold-lt); border-color: var(--gold-lt); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border-md);
+}
+.btn-ghost:hover { border-color: var(--border-hi); color: var(--text-1); background: var(--bg-hover); }
+.btn-sm { font-size: 0.73rem; padding: 0.28rem 0.65rem; }
+.btn-danger { background: transparent; color: var(--crimson); border: 1px solid rgba(160,48,48,0.3); }
+.btn-danger:hover { background: rgba(160,48,48,0.1); }
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  transition: color 0.2s, background 0.2s;
+}
+.btn-icon:hover { color: var(--text-1); background: var(--bg-hover); }
+.actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════════
+   CARDS
+═══════════════════════════════════════════ */
+.card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card:hover { border-color: var(--border-md); box-shadow: var(--shadow-sm); }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; margin-top: 1rem; }
+.char-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.char-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--gold);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.2s;
+}
+.char-card:hover { border-color: var(--border-md); box-shadow: var(--shadow-sm); }
+.char-card:hover::before { transform: scaleY(1); }
+.cc-name { font-family: 'Noto Serif TC', serif; font-size: 0.95rem; font-weight: 700; color: var(--text-1); }
+.cc-sub { font-size: 0.75rem; color: var(--text-3); margin-top: 0.2rem; }
+.cc-excerpt { font-size: 0.78rem; color: var(--text-2); margin-top: 0.5rem; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+.tag {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  background: var(--bg-surface);
+}
+.tag.gold { border-color: rgba(200,150,60,0.3); color: var(--gold-dim); background: rgba(200,150,60,0.06); }
+.tag.teal { border-color: rgba(46,125,110,0.3); color: var(--teal); background: rgba(46,125,110,0.06); }
+.tag.red  { border-color: rgba(160,48,48,0.3); color: var(--crimson); background: rgba(160,48,48,0.06); }
+
+/* ═══════════════════════════════════════════
+   SECTION HEADERS
+═══════════════════════════════════════════ */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.section-header h1 { font-size: 1.15rem; }
+
+/* ═══════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════ */
+.empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-3);
+  font-family: 'Noto Serif TC', serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  line-height: 2;
+}
+
+/* ═══════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════ */
+.modal-bg {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+.modal-lg { max-width: 760px; }
+.modal h2 { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; font-weight: 700; color: var(--gold); margin-bottom: 1.25rem; }
+.modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-3); font-size: 1rem; cursor: pointer; }
+.modal-footer { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+/* custom fields */
+.custom-fields { margin-top: 0.75rem; }
+.custom-field-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+.custom-field-row input { flex: 1; }
+.custom-field-key { max-width: 120px; }
+
+/* ═══════════════════════════════════════════
+   AI CHAT PANEL
+═══════════════════════════════════════════ */
+.ai-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.ai-msg {
+  border-radius: var(--radius);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  max-width: 90%;
+}
+.ai-msg.user {
+  background: rgba(200,150,60,0.1);
+  border: 1px solid rgba(200,150,60,0.2);
+  color: var(--text-2);
+  align-self: flex-end;
+}
+.ai-msg.assistant {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  align-self: flex-start;
+  white-space: pre-wrap;
+}
+.ai-msg.thinking { color: var(--text-3); font-style: italic; }
+.ai-input-row {
+  padding: 0.6rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.ai-input-row textarea {
+  flex: 1;
+  min-height: 58px;
+  max-height: 120px;
+  font-size: 0.8rem;
+  resize: none;
+}
+.ai-quick { padding: 0.4rem 0.6rem; display: flex; flex-wrap: wrap; gap: 0.3rem; border-top: 1px solid var(--border); flex-shrink: 0; }
+.ai-quick-btn {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: 0.68rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ai-quick-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+.ai-key-note {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  text-align: center;
+  padding: 0.3rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════
+   PAGE 1: MATERIALS LIBRARY
+═══════════════════════════════════════════ */
+/* inherits sidebar + content layout above */
+
+/* ═══════════════════════════════════════════
+   PAGE 2: NOVEL WORKSPACE
+═══════════════════════════════════════════ */
+.novel-sidebar {
+  width: 200px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+/* Sub-tabs inside novel workspace */
+.sub-tabs {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+}
+.sub-tab {
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  color: var(--text-3);
+  font-size: 0.82rem;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+.sub-tab:hover { color: var(--text-2); background: var(--bg-hover); }
+.sub-tab.active { color: var(--gold); border-left-color: var(--gold); background: var(--bg-hover); }
+
+/* prose editor */
+#prose-editor {
+  flex: 1;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1rem;
+  line-height: 2;
+  color: var(--text-1);
+  resize: none;
+  outline: none;
+  min-height: 400px;
+}
+#prose-editor:focus { border-color: var(--border-md); }
+
+/* relationship graph */
+#rel-canvas {
+  width: 100%;
+  height: 440px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+#rel-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.rel-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--bg-surface);
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  width: 66px; height: 66px;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-1);
+  cursor: grab;
+  user-select: none;
+  z-index: 2;
+  line-height: 1.3;
+  padding: 4px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.rel-node:hover { border-color: var(--gold-lt); box-shadow: 0 0 16px rgba(200,150,60,0.3); }
+.rel-edge-label {
+  position: absolute;
+  font-size: 0.62rem;
+  color: var(--text-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.1rem 0.35rem;
+  pointer-events: none;
+  z-index: 3;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+
+/* map canvas */
+#map-canvas {
+  width: 100%;
+  height: 420px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+}
+#map-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+  z-index: 3;
+}
+.map-pin-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--text-1);
+  box-shadow: 0 0 8px rgba(200,150,60,0.5);
+}
+.map-pin-label {
+  font-size: 0.62rem;
+  color: var(--text-1);
+  background: rgba(15,12,8,0.8);
+  padding: 0.1rem 0.35rem;
+  border-radius: 2px;
+  white-space: nowrap;
+  margin-top: 2px;
+  text-align: center;
+}
+
+/* timeline */
+.timeline { position: relative; padding-left: 2rem; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.6rem; top: 0; bottom: 0;
+  width: 1px;
+  background: var(--border-md);
+}
+.tl-event {
+  position: relative;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.2s;
+}
+.tl-event::before {
+  content: '';
+  position: absolute;
+  left: -1.6rem; top: 1rem;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 0 6px rgba(200,150,60,0.4);
+}
+.tl-event:hover { border-color: var(--border-md); }
+.tl-date { font-size: 0.68rem; color: var(--gold-dim); font-family: 'JetBrains Mono', monospace; }
+.tl-title { font-family: 'Noto Serif TC', serif; font-size: 0.9rem; font-weight: 700; color: var(--text-1); margin: 0.2rem 0; }
+.tl-desc { font-size: 0.78rem; color: var(--text-2); line-height: 1.6; }
+
+/* plot cards */
+.plot-lanes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+.plot-lane { background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.6rem; }
+.plot-lane-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.plot-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.plot-card:hover { border-color: var(--border-md); color: var(--text-1); }
+
+/* ═══════════════════════════════════════════
+   PAGE 3: SETTINGS
+═══════════════════════════════════════════ */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 0;
+  flex: 1;
+  overflow: hidden;
+}
+.settings-nav {
+  border-right: 1px solid var(--border);
+  padding: 1rem 0;
+  background: var(--bg-surface);
+}
+.settings-nav-item {
+  display: block;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  color: var(--text-3);
+  font-size: 0.83rem;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s;
+}
+.settings-nav-item:hover { color: var(--text-2); background: var(--bg-hover); }
+.settings-nav-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--bg-hover); }
+.settings-content { overflow-y: auto; padding: 1.5rem; }
+.settings-group { margin-bottom: 2rem; }
+.settings-group h2 { font-family: 'Noto Serif TC', serif; font-size: 1rem; font-weight: 700; color: var(--text-2); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.settings-row:last-child { border-bottom: none; }
+.sr-label { font-size: 0.85rem; color: var(--text-1); }
+.sr-desc { font-size: 0.72rem; color: var(--text-3); margin-top: 0.15rem; }
+.sr-control { display: flex; gap: 0.4rem; align-items: center; }
+.theme-chips { display: flex; gap: 0.5rem; }
+.theme-chip {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+.theme-chip.active { border-color: var(--gold); }
+.font-size-ctrl { display: flex; align-items: center; gap: 0.5rem; }
+.font-size-ctrl span { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--gold); min-width: 2.5rem; text-align: center; }
+.lang-select { width: 140px; }
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  background: var(--border-md);
+  border-radius: 2px;
+  outline: none;
+  width: 120px;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+}
+.api-key-row { display: flex; gap: 0.5rem; align-items: center; }
+.api-key-row input { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+.api-status { font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 2px; }
+.api-status.ok { background: rgba(46,125,110,0.15); color: var(--teal); border: 1px solid rgba(46,125,110,0.3); }
+.api-status.err { background: rgba(160,48,48,0.1); color: var(--crimson); border: 1px solid rgba(160,48,48,0.2); }
+.import-export-row { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+
+/* ═══════════════════════════════════════════
+   WORLD / LORE BLOCKS
+═══════════════════════════════════════════ */
+.lore-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-top: 1rem; }
+.lore-block {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.lore-block-header {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gold-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.lore-block textarea {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.75rem;
+  min-height: 90px;
+}
+
+/* divider */
+hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+/* label with AI button */
+.field-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+.ai-suggest-btn {
+  font-size: 0.62rem;
+  background: rgba(200,150,60,0.08);
+  border: 1px solid rgba(200,150,60,0.2);
+  color: var(--gold-dim);
+  padding: 0.15rem 0.45rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ai-suggest-btn:hover { background: rgba(200,150,60,0.15); color: var(--gold); }
+
+/* misc */
+.novel-tab-content { display: none; }
+.novel-tab-content.active { display: block; }
+.dot-sep { color: var(--text-3); margin: 0 0.4rem; }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- ═══════════════════════════════════════════
+     TOP BAR
+═══════════════════════════════════════════ -->
+<div id="topbar">
+  <div class="brand">世界鑄造所 <span>WorldForge</span></div>
+  <div class="top-tabs">
+    <button class="top-tab active" onclick="switchPage('library')">📦 素材庫</button>
+    <button class="top-tab" onclick="switchPage('novel')">✍️ 小說工作區</button>
+    <button class="top-tab" onclick="switchPage('settings')">⚙️ 設定</button>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 1: LIBRARY
+════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-library">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label" data-i18n="characters">角色</div>
+      <div class="sidebar-item active" onclick="libShow('characters',this)">
+        <span class="si-icon">🧍</span><span data-i18n="all_chars">全部角色</span>
+        <span class="si-count" id="char-count">0</span>
+      </div>
+      <button class="sidebar-add" onclick="openCharModal()">＋ 新增角色</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label" data-i18n="worldview">世界觀</div>
+      <div class="sidebar-item" onclick="libShow('worldview',this)">
+        <span class="si-icon">🌍</span><span data-i18n="world_settings">世界設定</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label" data-i18n="others">其他素材</div>
+      <div class="sidebar-item" onclick="libShow('items',this)">
+        <span class="si-icon">⚔️</span><span data-i18n="items">道具 / 物品</span>
+        <span class="si-count" id="item-count">0</span>
+      </div>
+      <div class="sidebar-item" onclick="libShow('factions',this)">
+        <span class="si-icon">🏛️</span><span data-i18n="factions">勢力 / 組織</span>
+        <span class="si-count" id="faction-count">0</span>
+      </div>
+      <div class="sidebar-item" onclick="libShow('terms',this)">
+        <span class="si-icon">📖</span><span data-i18n="terms">術語 / 名詞</span>
+        <span class="si-count" id="term-count">0</span>
+      </div>
+    </div>
+    <div style="padding:0.75rem 0.9rem;margin-top:auto;border-top:1px solid var(--border)">
+      <div class="sidebar-label" style="margin-bottom:0.5rem">資料</div>
+      <div style="display:flex;gap:0.4rem">
+        <button class="btn btn-ghost btn-sm" onclick="exportData()" style="flex:1">匯出</button>
+        <button class="btn btn-ghost btn-sm" onclick="importData()" style="flex:1">匯入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="content-main" id="lib-main">
+
+      <!-- CHARACTERS VIEW -->
+      <div id="lib-characters" class="lib-view">
+        <div class="section-header">
+          <h1 data-i18n="all_chars">全部角色</h1>
+          <button class="btn btn-primary" onclick="openCharModal()">＋ <span data-i18n="add_char">新增角色</span></button>
+        </div>
+        <div class="card-grid" id="char-grid">
+          <div class="empty" id="char-empty">尚無角色<br>點擊右上角開始建立</div>
+        </div>
+      </div>
+
+      <!-- WORLDVIEW VIEW -->
+      <div id="lib-worldview" class="lib-view" style="display:none">
+        <div class="section-header">
+          <h1 data-i18n="world_settings">世界設定</h1>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="aiSuggestWorld()">✨ AI 協助整理</button>
+            <button class="btn btn-primary" onclick="saveWorld()">💾 儲存</button>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:0.85rem">
+          <div class="grid-2">
+            <div class="field"><label data-i18n="world_name">世界名稱</label><input type="text" id="w-name" placeholder="例：黎明大陸"></div>
+            <div class="field"><label data-i18n="world_type">世界類型</label>
+              <select id="w-type">
+                <option>奇幻</option><option>科幻</option><option>現代</option>
+                <option>古代</option><option>末世</option><option>架空歷史</option><option>其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label data-i18n="world_desc">整體描述</label><textarea id="w-desc" placeholder="這個世界的整體樣貌、氛圍與特色…"></textarea></div>
+        </div>
+        <div class="lore-grid">
+          <div class="lore-block">
+            <div class="lore-block-header">⚔️ 歷史與紀年</div>
+            <textarea id="w-history" placeholder="重要歷史事件、時代劃分…"></textarea>
+          </div>
+          <div class="lore-block">
+            <div class="lore-block-header">✨ 魔法 / 科技規則</div>
+            <textarea id="w-magic" placeholder="超自然力量的運作規則…"></textarea>
+          </div>
+          <div class="lore-block">
+            <div class="lore-block-header">🏛️ 勢力與政治</div>
+            <textarea id="w-factions" placeholder="國家、組織、派系關係…"></textarea>
+          </div>
+          <div class="lore-block">
+            <div class="lore-block-header">🌿 地理與環境</div>
+            <textarea id="w-geo" placeholder="重要地點、地形、氣候…"></textarea>
+          </div>
+          <div class="lore-block">
+            <div class="lore-block-header">👥 種族與文化</div>
+            <textarea id="w-races" placeholder="種族、信仰、風俗習慣…"></textarea>
+          </div>
+          <div class="lore-block">
+            <div class="lore-block-header">📜 其他設定</div>
+            <textarea id="w-misc" placeholder="任何其他重要細節…"></textarea>
+          </div>
+        </div>
+        <div id="world-saved" style="display:none;text-align:center;margin-top:1rem;color:var(--teal);font-size:0.82rem">✓ 已儲存</div>
+      </div>
+
+      <!-- ITEMS VIEW -->
+      <div id="lib-items" class="lib-view" style="display:none">
+        <div class="section-header">
+          <h1>道具 / 物品</h1>
+          <button class="btn btn-primary" onclick="openSimpleModal('item')">＋ 新增物品</button>
+        </div>
+        <div class="card-grid" id="item-grid"><div class="empty">尚無物品</div></div>
+      </div>
+
+      <!-- FACTIONS VIEW -->
+      <div id="lib-factions" class="lib-view" style="display:none">
+        <div class="section-header">
+          <h1>勢力 / 組織</h1>
+          <button class="btn btn-primary" onclick="openSimpleModal('faction')">＋ 新增勢力</button>
+        </div>
+        <div class="card-grid" id="faction-grid"><div class="empty">尚無勢力</div></div>
+      </div>
+
+      <!-- TERMS VIEW -->
+      <div id="lib-terms" class="lib-view" style="display:none">
+        <div class="section-header">
+          <h1>術語 / 名詞</h1>
+          <button class="btn btn-primary" onclick="openSimpleModal('term')">＋ 新增術語</button>
+        </div>
+        <div class="card-grid" id="term-grid"><div class="empty">尚無術語</div></div>
+      </div>
+
+    </div>
+
+    <!-- AI PANEL (Library) -->
+    <div class="content-panel">
+      <div class="panel-header">
+        <h2>✨ AI 助理</h2>
+        <button class="btn-icon btn-sm" onclick="clearAIChat('lib')" title="清空對話">🗑</button>
+      </div>
+      <div class="ai-panel">
+        <div class="ai-messages" id="lib-ai-msgs">
+          <div class="ai-msg assistant">你好！我是你的創作助理。可以幫你發展角色設定、補充世界觀細節，或回答任何創作問題。</div>
+        </div>
+        <div class="ai-quick" id="lib-ai-quick">
+          <button class="ai-quick-btn" onclick="quickAsk('lib','幫我發展一個有趣的角色背景故事')">💡 角色背景</button>
+          <button class="ai-quick-btn" onclick="quickAsk('lib','幫我完善世界觀設定')">🌍 世界觀</button>
+          <button class="ai-quick-btn" onclick="quickAsk('lib','給這個角色設計一些獨特的技能')">⚔️ 技能設計</button>
+          <button class="ai-quick-btn" onclick="quickAsk('lib','分析現有角色之間可能的關係')">🔗 角色關係</button>
+        </div>
+        <div class="ai-input-row">
+          <textarea id="lib-ai-input" placeholder="問我任何創作問題…" onkeydown="aiKeyDown(event,'lib')"></textarea>
+          <button class="btn btn-primary btn-sm" onclick="sendAI('lib')" style="align-self:flex-end">送出</button>
+        </div>
+        <div class="ai-key-note" id="lib-key-note">請在設定中輸入 Claude API Key</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 2: NOVEL WORKSPACE
+════════════════════════════════════════════════════════ -->
+<div class="page" id="page-novel">
+  <!-- NOVEL LEFT SIDEBAR -->
+  <div class="novel-sidebar">
+    <div style="padding:0.6rem 0.9rem;border-bottom:1px solid var(--border)">
+      <div class="sidebar-label">工作區</div>
+    </div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="novelTab('prose',this)">📝 正文編輯</button>
+      <button class="sub-tab" onclick="novelTab('relations',this)">🔗 人物關係</button>
+      <button class="sub-tab" onclick="novelTab('map',this)">🗺️ 地圖</button>
+      <button class="sub-tab" onclick="novelTab('timeline',this)">📅 歷史時間軸</button>
+      <button class="sub-tab" onclick="novelTab('plot',this)">📋 劇情規劃</button>
+    </div>
+    <hr class="sep" style="margin:0">
+    <div style="padding:0.6rem 0.9rem">
+      <div class="sidebar-label" style="margin-bottom:0.5rem">導入素材</div>
+      <button class="sidebar-add" style="width:100%;margin:0;display:block" onclick="importCharsToNovel()">＋ 從素材庫導入角色</button>
+    </div>
+    <div style="padding:0.4rem 0.9rem">
+      <div class="sidebar-label" style="margin-bottom:0.4rem">已導入角色</div>
+      <div id="novel-chars-list" style="display:flex;flex-direction:column;gap:0.3rem"></div>
+    </div>
+  </div>
+
+  <!-- NOVEL CONTENT -->
+  <div class="content">
+    <div class="content-main">
+
+      <!-- PROSE TAB -->
+      <div class="novel-tab-content active" id="ntab-prose">
+        <div class="section-header">
+          <h1>正文編輯</h1>
+          <div class="actions">
+            <span style="font-size:0.72rem;color:var(--text-3)" id="prose-wc">0 字</span>
+            <button class="btn btn-ghost btn-sm" onclick="aiWriteAssist()">✨ AI 續寫</button>
+            <button class="btn btn-primary btn-sm" onclick="saveProse()">💾 儲存</button>
+          </div>
+        </div>
+        <textarea id="prose-editor" placeholder="在此輸入你的故事…"></textarea>
+      </div>
+
+      <!-- RELATIONS TAB -->
+      <div class="novel-tab-content" id="ntab-relations">
+        <div class="section-header">
+          <h1>人物關係</h1>
+          <button class="btn btn-primary btn-sm" onclick="openRelModal()">＋ 新增關係</button>
+        </div>
+        <div id="rel-canvas">
+          <svg id="rel-svg"></svg>
+          <div class="empty" id="rel-empty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+            導入角色後在此建立關係圖
+          </div>
+        </div>
+        <div id="rel-list" style="display:flex;flex-direction:column;gap:0.4rem"></div>
+      </div>
+
+      <!-- MAP TAB -->
+      <div class="novel-tab-content" id="ntab-map">
+        <div class="section-header">
+          <h1>世界地圖</h1>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="clearMap()">🗑 清空</button>
+            <button class="btn btn-primary btn-sm" onclick="addMapPin()">＋ 新增地點</button>
+          </div>
+        </div>
+        <div id="map-canvas" onclick="handleMapClick(event)">
+          <svg id="map-svg">
+            <defs>
+              <filter id="grain">
+                <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+                <feColorMatrix type="saturate" values="0"/>
+                <feBlend in="SourceGraphic" mode="multiply"/>
+              </filter>
+            </defs>
+            <!-- subtle terrain grid -->
+            <rect width="100%" height="100%" fill="none"/>
+          </svg>
+          <div class="empty" id="map-empty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+            點擊地圖新增地點
+          </div>
+        </div>
+        <div id="map-pins-list" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:1rem"></div>
+      </div>
+
+      <!-- TIMELINE TAB -->
+      <div class="novel-tab-content" id="ntab-timeline">
+        <div class="section-header">
+          <h1>歷史時間軸</h1>
+          <button class="btn btn-primary btn-sm" onclick="openTLModal()">＋ 新增事件</button>
+        </div>
+        <div class="timeline" id="timeline-list">
+          <div class="empty">尚無事件，點擊新增</div>
+        </div>
+      </div>
+
+      <!-- PLOT TAB -->
+      <div class="novel-tab-content" id="ntab-plot">
+        <div class="section-header">
+          <h1>劇情規劃</h1>
+          <button class="btn btn-primary btn-sm" onclick="openPlotModal()">＋ 新增卡片</button>
+        </div>
+        <div class="plot-lanes">
+          <div class="plot-lane">
+            <div class="plot-lane-title">💡 概念</div>
+            <div id="plot-lane-idea"></div>
+          </div>
+          <div class="plot-lane">
+            <div class="plot-lane-title">✏️ 草稿</div>
+            <div id="plot-lane-draft"></div>
+          </div>
+          <div class="plot-lane">
+            <div class="plot-lane-title">🔄 修改中</div>
+            <div id="plot-lane-wip"></div>
+          </div>
+          <div class="plot-lane">
+            <div class="plot-lane-title">✅ 完成</div>
+            <div id="plot-lane-done"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- AI PANEL (Novel) -->
+    <div class="content-panel">
+      <div class="panel-header">
+        <h2>✨ 寫作助理</h2>
+        <button class="btn-icon btn-sm" onclick="clearAIChat('novel')" title="清空">🗑</button>
+      </div>
+      <div class="ai-panel">
+        <div class="ai-messages" id="novel-ai-msgs">
+          <div class="ai-msg assistant">我是你的寫作助理！可以幫你續寫故事、發展情節、描寫場景，或提供任何創作建議。</div>
+        </div>
+        <div class="ai-quick">
+          <button class="ai-quick-btn" onclick="quickAsk('novel','幫我繼續這個場景的描寫')">📝 續寫</button>
+          <button class="ai-quick-btn" onclick="quickAsk('novel','給我一些情節轉折的點子')">💡 轉折點</button>
+          <button class="ai-quick-btn" onclick="quickAsk('novel','幫我描寫角色之間的對話')">💬 對話</button>
+          <button class="ai-quick-btn" onclick="quickAsk('novel','分析目前的故事節奏')">📊 節奏分析</button>
+        </div>
+        <div class="ai-input-row">
+          <textarea id="novel-ai-input" placeholder="告訴我你需要什麼幫助…" onkeydown="aiKeyDown(event,'novel')"></textarea>
+          <button class="btn btn-primary btn-sm" onclick="sendAI('novel')" style="align-self:flex-end">送出</button>
+        </div>
+        <div class="ai-key-note" id="novel-key-note">請在設定中輸入 Claude API Key</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 3: SETTINGS
+════════════════════════════════════════════════════════ -->
+<div class="page" id="page-settings">
+  <div class="settings-layout">
+    <div class="settings-nav">
+      <button class="settings-nav-item active" onclick="settingsNav('appearance',this)">🎨 外觀</button>
+      <button class="settings-nav-item" onclick="settingsNav('language',this)">🌐 語言</button>
+      <button class="settings-nav-item" onclick="settingsNav('api',this)">🔑 AI / API</button>
+      <button class="settings-nav-item" onclick="settingsNav('data',this)">💾 資料管理</button>
+    </div>
+    <div class="settings-content">
+
+      <!-- APPEARANCE -->
+      <div id="spage-appearance" class="spage">
+        <div class="settings-group">
+          <h2>主題色</h2>
+          <div class="settings-row">
+            <div><div class="sr-label">配色方案</div></div>
+            <div class="theme-chips">
+              <div class="theme-chip active" style="background:#17140f;border-color:var(--gold)" title="暗色" onclick="setTheme('dark',this)"></div>
+              <div class="theme-chip" style="background:#f2ece0" title="淺色" onclick="setTheme('light',this)"></div>
+              <div class="theme-chip" style="background:#2f2010" title="深褐" onclick="setTheme('sepia',this)"></div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h2>字體</h2>
+          <div class="settings-row">
+            <div><div class="sr-label">字體大小</div><div class="sr-desc">影響全站文字大小</div></div>
+            <div class="font-size-ctrl">
+              <button class="btn btn-ghost btn-sm" onclick="changeFontSize(-1)">A−</button>
+              <span id="font-size-display">15px</span>
+              <button class="btn btn-ghost btn-sm" onclick="changeFontSize(1)">A+</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div><div class="sr-label">正文字型</div></div>
+            <select id="body-font" onchange="applyBodyFont()" style="width:180px">
+              <option value="'Noto Sans TC', sans-serif">Noto Sans TC（黑體）</option>
+              <option value="'Noto Serif TC', serif">Noto Serif TC（明體）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- LANGUAGE -->
+      <div id="spage-language" class="spage" style="display:none">
+        <div class="settings-group">
+          <h2>語言 Language</h2>
+          <div class="settings-row">
+            <div><div class="sr-label">介面語言</div></div>
+            <select class="lang-select" id="lang-select" onchange="setLang(this.value)">
+              <option value="zh-TW">繁體中文</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+              <option value="ja">日本語</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- API -->
+      <div id="spage-api" class="spage" style="display:none">
+        <div class="settings-group">
+          <h2>Claude API 設定</h2>
+          <div class="settings-row">
+            <div><div class="sr-label">API Key</div><div class="sr-desc">用於 AI 助理功能</div></div>
+          </div>
+          <div class="api-key-row">
+            <input type="password" id="api-key-input" placeholder="sk-ant-…">
+            <button class="btn btn-primary btn-sm" onclick="saveApiKey()">儲存</button>
+            <span class="api-status" id="api-status-badge" style="display:none"></span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--text-3);margin-top:0.5rem">
+            Key 僅儲存於本機 localStorage，不會上傳任何伺服器。
+          </div>
+        </div>
+        <div class="settings-group">
+          <h2>AI 行為</h2>
+          <div class="settings-row">
+            <div><div class="sr-label">預設語言</div><div class="sr-desc">AI 回覆使用的語言</div></div>
+            <select id="ai-lang" style="width:140px">
+              <option value="繁體中文">繁體中文</option>
+              <option value="简体中文">简体中文</option>
+              <option value="English">English</option>
+              <option value="日本語">日本語</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATA -->
+      <div id="spage-data" class="spage" style="display:none">
+        <div class="settings-group">
+          <h2>資料管理</h2>
+          <div class="settings-row">
+            <div><div class="sr-label">匯出所有資料</div><div class="sr-desc">下載 JSON 備份檔</div></div>
+            <button class="btn btn-ghost btn-sm" onclick="exportData()">📥 匯出 JSON</button>
+          </div>
+          <div class="settings-row">
+            <div><div class="sr-label">匯入資料</div><div class="sr-desc">從 JSON 備份還原</div></div>
+            <button class="btn btn-ghost btn-sm" onclick="importData()">📤 匯入 JSON</button>
+          </div>
+          <div class="settings-row">
+            <div><div class="sr-label">清除全部資料</div><div class="sr-desc" style="color:var(--crimson)">此操作不可逆</div></div>
+            <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑 清除</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- ═══════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════ -->
+
+<!-- CHARACTER MODAL -->
+<div class="modal-bg" id="char-modal">
+<div class="modal modal-lg">
+  <button class="modal-close" onclick="closeModal('char-modal')">✕</button>
+  <h2 id="char-modal-title">新增角色</h2>
+  <div class="grid-2">
+    <div class="field"><label>姓名 *</label><input type="text" id="c-name" placeholder="角色名稱"></div>
+    <div class="field"><label>稱號 / 別名</label><input type="text" id="c-alias" placeholder="外號、代號"></div>
+  </div>
+  <div class="grid-4">
+    <div class="field"><label>年齡</label><input type="text" id="c-age" placeholder="歲"></div>
+    <div class="field"><label>性別</label>
+      <select id="c-gender"><option value="">──</option><option>男</option><option>女</option><option>不明</option><option>其他</option></select>
+    </div>
+    <div class="field"><label>身高</label><input type="text" id="c-height" placeholder="cm"></div>
+    <div class="field"><label>體重</label><input type="text" id="c-weight" placeholder="kg"></div>
+  </div>
+  <div class="grid-3">
+    <div class="field"><label>陣營</label>
+      <select id="c-align"><option value="">──</option><option>正派</option><option>反派</option><option>中立</option><option>灰色地帶</option></select>
+    </div>
+    <div class="field"><label>職業 / 身份</label><input type="text" id="c-role" placeholder="騎士、魔法師…"></div>
+    <div class="field"><label>所屬勢力</label><input type="text" id="c-faction" placeholder="組織、國家"></div>
+  </div>
+  <div class="field">
+    <div class="field-header">
+      <label>外貌描述</label>
+      <button class="ai-suggest-btn" onclick="aiFieldSuggest('c-appearance','外貌描述')">✨ AI 建議</button>
+    </div>
+    <textarea id="c-appearance" placeholder="外形特徵、穿著…"></textarea>
+  </div>
+  <div class="field">
+    <div class="field-header">
+      <label>個性特質</label>
+      <button class="ai-suggest-btn" onclick="aiFieldSuggest('c-personality','個性特質')">✨ AI 建議</button>
+    </div>
+    <textarea id="c-personality" placeholder="性格、行為模式…"></textarea>
+  </div>
+  <div class="field">
+    <div class="field-header">
+      <label>背景故事</label>
+      <button class="ai-suggest-btn" onclick="aiFieldSuggest('c-backstory','背景故事')">✨ AI 建議</button>
+    </div>
+    <textarea id="c-backstory" placeholder="過去的經歷…"></textarea>
+  </div>
+  <div class="grid-2">
+    <div class="field">
+      <div class="field-header"><label>能力 / 技能</label><button class="ai-suggest-btn" onclick="aiFieldSuggest('c-skills','能力技能')">✨ AI 建議</button></div>
+      <textarea id="c-skills" placeholder="特殊能力、招式…" style="min-height:60px"></textarea>
+    </div>
+    <div class="field">
+      <label>動機 / 目標</label>
+      <textarea id="c-motivation" placeholder="核心動力…" style="min-height:60px"></textarea>
+    </div>
+  </div>
+  <div class="field">
+    <label>備注</label>
+    <textarea id="c-notes" placeholder="其他細節…" style="min-height:50px"></textarea>
+  </div>
+
+  <!-- CUSTOM FIELDS -->
+  <hr class="sep">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+    <label style="text-transform:none;font-size:0.8rem;color:var(--text-2)">自訂欄位</label>
+    <button class="btn btn-ghost btn-sm" onclick="addCustomField()">＋ 新增欄位</button>
+  </div>
+  <div class="custom-fields" id="custom-fields-list"></div>
+
+  <input type="hidden" id="c-edit-id">
+  <div class="modal-footer">
+    <button class="btn btn-danger btn-sm" id="char-delete-btn" style="display:none;margin-right:auto" onclick="deleteChar()">刪除角色</button>
+    <button class="btn btn-ghost" onclick="closeModal('char-modal')">取消</button>
+    <button class="btn btn-primary" onclick="saveChar()">儲存角色</button>
+  </div>
+</div>
+</div>
+
+<!-- SIMPLE MODAL (items / factions / terms) -->
+<div class="modal-bg" id="simple-modal">
+<div class="modal">
+  <button class="modal-close" onclick="closeModal('simple-modal')">✕</button>
+  <h2 id="simple-modal-title">新增</h2>
+  <div class="field"><label>名稱 *</label><input type="text" id="sm-name" placeholder="名稱"></div>
+  <div class="field"><label>分類 / 標籤</label><input type="text" id="sm-tag" placeholder="例：武器、魔法物品"></div>
+  <div class="field">
+    <div class="field-header">
+      <label>描述</label>
+      <button class="ai-suggest-btn" onclick="aiFieldSuggest('sm-desc','描述')">✨ AI 建議</button>
+    </div>
+    <textarea id="sm-desc" placeholder="詳細說明…"></textarea>
+  </div>
+  <!-- custom fields for simple items -->
+  <hr class="sep">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+    <label style="text-transform:none;font-size:0.8rem;color:var(--text-2)">自訂欄位</label>
+    <button class="btn btn-ghost btn-sm" onclick="addCustomField('sm')">＋ 新增欄位</button>
+  </div>
+  <div class="custom-fields" id="sm-custom-fields-list"></div>
+  <input type="hidden" id="sm-type">
+  <input type="hidden" id="sm-edit-id">
+  <div class="modal-footer">
+    <button class="btn btn-danger btn-sm" id="sm-delete-btn" style="display:none;margin-right:auto" onclick="deleteSimple()">刪除</button>
+    <button class="btn btn-ghost" onclick="closeModal('simple-modal')">取消</button>
+    <button class="btn btn-primary" onclick="saveSimple()">儲存</button>
+  </div>
+</div>
+</div>
+
+<!-- RELATION MODAL -->
+<div class="modal-bg" id="rel-modal">
+<div class="modal">
+  <button class="modal-close" onclick="closeModal('rel-modal')">✕</button>
+  <h2>新增人物關係</h2>
+  <div class="grid-2">
+    <div class="field"><label>角色 A</label><select id="rm-a"></select></div>
+    <div class="field"><label>角色 B</label><select id="rm-b"></select></div>
+  </div>
+  <div class="field"><label>關係描述</label><input type="text" id="rm-desc" placeholder="例：摯友、師徒、宿敵…"></div>
+  <div class="field"><label>詳細說明</label><textarea id="rm-detail" placeholder="進一步描述關係背景…" style="min-height:60px"></textarea></div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('rel-modal')">取消</button>
+    <button class="btn btn-primary" onclick="saveRelation()">儲存</button>
+  </div>
+</div>
+</div>
+
+<!-- TIMELINE MODAL -->
+<div class="modal-bg" id="tl-modal">
+<div class="modal">
+  <button class="modal-close" onclick="closeModal('tl-modal')">✕</button>
+  <h2 id="tl-modal-title">新增事件</h2>
+  <div class="grid-2">
+    <div class="field"><label>時間 / 紀年</label><input type="text" id="tl-date" placeholder="例：第三紀元 421 年"></div>
+    <div class="field"><label>事件類型</label>
+      <select id="tl-type"><option>歷史</option><option>戰爭</option><option>政治</option><option>個人</option><option>其他</option></select>
+    </div>
+  </div>
+  <div class="field"><label>事件標題 *</label><input type="text" id="tl-title" placeholder="事件名稱"></div>
+  <div class="field"><label>描述</label><textarea id="tl-desc" placeholder="詳細說明…"></textarea></div>
+  <input type="hidden" id="tl-edit-id">
+  <div class="modal-footer">
+    <button class="btn btn-danger btn-sm" id="tl-delete-btn" style="display:none;margin-right:auto" onclick="deleteTL()">刪除</button>
+    <button class="btn btn-ghost" onclick="closeModal('tl-modal')">取消</button>
+    <button class="btn btn-primary" onclick="saveTL()">儲存</button>
+  </div>
+</div>
+</div>
+
+<!-- PLOT MODAL -->
+<div class="modal-bg" id="plot-modal">
+<div class="modal">
+  <button class="modal-close" onclick="closeModal('plot-modal')">✕</button>
+  <h2 id="plot-modal-title">新增劇情卡</h2>
+  <div class="field"><label>標題 *</label><input type="text" id="pm-title" placeholder="場景或事件名稱"></div>
+  <div class="field"><label>欄位</label>
+    <select id="pm-lane"><option value="idea">概念</option><option value="draft">草稿</option><option value="wip">修改中</option><option value="done">完成</option></select>
+  </div>
+  <div class="field"><label>描述</label><textarea id="pm-desc" placeholder="這個場景的重點…"></textarea></div>
+  <div class="field"><label>相關角色</label><input type="text" id="pm-chars" placeholder="以逗號分隔"></div>
+  <input type="hidden" id="pm-edit-id">
+  <div class="modal-footer">
+    <button class="btn btn-danger btn-sm" id="pm-delete-btn" style="display:none;margin-right:auto" onclick="deletePlot()">刪除</button>
+    <button class="btn btn-ghost" onclick="closeModal('plot-modal')">取消</button>
+    <button class="btn btn-primary" onclick="savePlot()">儲存</button>
+  </div>
+</div>
+</div>
+
+<!-- MAP PIN MODAL -->
+<div class="modal-bg" id="map-modal">
+<div class="modal">
+  <button class="modal-close" onclick="closeModal('map-modal')">✕</button>
+  <h2>新增地點</h2>
+  <div class="field"><label>地點名稱 *</label><input type="text" id="mp-name" placeholder="地點名稱"></div>
+  <div class="field"><label>地點類型</label>
+    <select id="mp-type"><option>城市</option><option>遺跡</option><option>山脈</option><option>海洋</option><option>森林</option><option>其他</option></select>
+  </div>
+  <div class="field"><label>描述</label><textarea id="mp-desc" placeholder="地點的特色…" style="min-height:60px"></textarea></div>
+  <input type="hidden" id="mp-x">
+  <input type="hidden" id="mp-y">
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('map-modal')">取消</button>
+    <button class="btn btn-primary" onclick="saveMapPin()">新增地點</button>
+  </div>
+</div>
+</div>
+
+<!-- IMPORT FILE INPUT (hidden) -->
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let S = {
+  chars: [],
+  items: [],
+  factions: [],
+  terms: [],
+  world: {},
+  relations: [],
+  mapPins: [],
+  timeline: [],
+  plot: [],
+  novelChars: [],   // IDs of chars imported to novel
+  prose: '',
+  nodePos: {},
+  pendingMapClick: null,
+};
+
+let apiKey = '';
+let aiLang = '繁體中文';
+let fontSizePx = 15;
+let aiChats = { lib: [], novel: [] };
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+(function init() {
+  const saved = localStorage.getItem('wf2');
+  if (saved) {
+    try { Object.assign(S, JSON.parse(saved)); } catch(e) {}
+  }
+  apiKey = localStorage.getItem('wf2-key') || '';
+  fontSizePx = parseInt(localStorage.getItem('wf2-fs') || '15');
+  document.documentElement.style.setProperty('--fs', fontSizePx + 'px');
+  document.getElementById('font-size-display').textContent = fontSizePx + 'px';
+  const theme = localStorage.getItem('wf2-theme') || 'dark';
+  document.body.dataset.theme = theme;
+  document.querySelectorAll('.theme-chip').forEach((c,i) => {
+    c.classList.toggle('active', ['dark','light','sepia'][i] === theme);
+  });
+  if (apiKey) {
+    document.getElementById('api-key-input').value = apiKey;
+    updateKeyNote();
+  }
+  const lang = localStorage.getItem('wf2-lang') || 'zh-TW';
+  document.getElementById('lang-select').value = lang;
+  applyLang(lang);
+  renderAll();
+})();
+
+function save() {
+  localStorage.setItem('wf2', JSON.stringify(S));
+}
+
+function renderAll() {
+  renderChars();
+  renderSimpleGrid('item');
+  renderSimpleGrid('faction');
+  renderSimpleGrid('term');
+  loadWorldForm();
+  renderRelList();
+  renderGraph();
+  renderMapPins();
+  renderTimeline();
+  renderPlot();
+  renderNovelCharsList();
+  updateCounts();
+  const pe = document.getElementById('prose-editor');
+  pe.value = S.prose || '';
+  updateWordCount();
+}
+
+// ══════════════════════════════════════════
+//  PAGE / TAB NAVIGATION
+// ══════════════════════════════════════════
+function switchPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.top-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  event.target.classList.add('active');
+  if (p === 'novel') { renderGraph(); renderMapPins(); }
+}
+
+function libShow(view, el) {
+  document.querySelectorAll('.lib-view').forEach(v => v.style.display = 'none');
+  document.getElementById('lib-'+view).style.display = 'block';
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function novelTab(tab, el) {
+  document.querySelectorAll('.novel-tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('ntab-'+tab).classList.add('active');
+  el.classList.add('active');
+  if (tab === 'relations') { setTimeout(renderGraph, 50); }
+  if (tab === 'map') { setTimeout(renderMapPins, 50); }
+}
+
+function settingsNav(page, el) {
+  document.querySelectorAll('.spage').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('spage-'+page).style.display = 'block';
+  el.classList.add('active');
+}
+
+// ══════════════════════════════════════════
+//  MODAL HELPERS
+// ══════════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+
+// ══════════════════════════════════════════
+//  CHARACTERS
+// ══════════════════════════════════════════
+function openCharModal(id) {
+  clearCharForm();
+  document.getElementById('c-edit-id').value = id || '';
+  document.getElementById('char-modal-title').textContent = id ? '編輯角色' : '新增角色';
+  document.getElementById('char-delete-btn').style.display = id ? '' : 'none';
+  if (id) {
+    const c = S.chars.find(x=>x.id===id);
+    if (c) fillCharForm(c);
+  }
+  openModal('char-modal');
+}
+
+function clearCharForm() {
+  ['c-name','c-alias','c-age','c-height','c-weight','c-role','c-faction',
+   'c-appearance','c-personality','c-backstory','c-skills','c-motivation','c-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('c-gender').value = '';
+  document.getElementById('c-align').value = '';
+  document.getElementById('custom-fields-list').innerHTML = '';
+}
+
+function fillCharForm(c) {
+  const fields = ['name','alias','age','height','weight','role','faction',
+    'appearance','personality','backstory','skills','motivation','notes'];
+  fields.forEach(f => {
+    const el = document.getElementById('c-'+f);
+    if (el) el.value = c[f] || '';
+  });
+  document.getElementById('c-gender').value = c.gender || '';
+  document.getElementById('c-align').value = c.align || '';
+  const cf = document.getElementById('custom-fields-list');
+  cf.innerHTML = '';
+  (c.customFields || []).forEach(f => addCustomFieldRow(f.key, f.value));
+}
+
+function addCustomField() {
+  addCustomFieldRow('', '');
+}
+function addCustomFieldRow(key='', value='') {
+  const row = document.createElement('div');
+  row.className = 'custom-field-row';
+  row.innerHTML = `<input type="text" class="custom-field-key" placeholder="欄位名稱" value="${key}">
+    <input type="text" placeholder="內容" value="${value}">
+    <button class="btn-icon" onclick="this.parentNode.remove()">✕</button>`;
+  document.getElementById('custom-fields-list').appendChild(row);
+}
+
+function getCustomFields() {
+  return Array.from(document.querySelectorAll('#custom-fields-list .custom-field-row')).map(row => {
+    const inputs = row.querySelectorAll('input');
+    return { key: inputs[0].value.trim(), value: inputs[1].value.trim() };
+  }).filter(f => f.key);
+}
+
+function saveChar() {
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { alert('請輸入角色姓名'); return; }
+  const editId = document.getElementById('c-edit-id').value;
+  const c = {
+    id: editId || uid(),
+    name, alias: gv('c-alias'), age: gv('c-age'), height: gv('c-height'), weight: gv('c-weight'),
+    gender: gv('c-gender'), align: gv('c-align'), role: gv('c-role'), faction: gv('c-faction'),
+    appearance: gv('c-appearance'), personality: gv('c-personality'),
+    backstory: gv('c-backstory'), skills: gv('c-skills'),
+    motivation: gv('c-motivation'), notes: gv('c-notes'),
+    customFields: getCustomFields()
+  };
+  if (editId) {
+    const i = S.chars.findIndex(x=>x.id===editId);
+    if (i >= 0) S.chars[i] = c; else S.chars.push(c);
+  } else { S.chars.push(c); }
+  save(); closeModal('char-modal'); renderChars(); updateCounts();
+}
+
+function deleteChar() {
+  const id = document.getElementById('c-edit-id').value;
+  if (!confirm('確定刪除此角色？')) return;
+  S.chars = S.chars.filter(c => c.id !== id);
+  S.relations = S.relations.filter(r => r.a !== id && r.b !== id);
+  S.novelChars = S.novelChars.filter(x => x !== id);
+  delete S.nodePos[id];
+  save(); closeModal('char-modal');
+  renderChars(); updateCounts(); renderGraph(); renderNovelCharsList();
+}
+
+function renderChars() {
+  const grid = document.getElementById('char-grid');
+  if (!S.chars.length) {
+    grid.innerHTML = '<div class="empty">尚無角色<br>點擊右上角開始建立</div>';
+    return;
+  }
+  grid.innerHTML = S.chars.map(c => `
+    <div class="char-card" onclick="openCharModal('${c.id}')">
+      <div class="cc-name">${c.name}${c.alias ? ` <span style="font-weight:400;opacity:0.6;font-size:.82rem">·${c.alias}</span>` : ''}</div>
+      <div class="cc-sub">${[c.role, c.faction].filter(Boolean).join(' · ') || '&ensp;'}</div>
+      <div class="tag-row">
+        ${c.align ? `<span class="tag ${c.align==='正派'?'teal':c.align==='反派'?'red':''}">${c.align}</span>` : ''}
+        ${c.gender ? `<span class="tag">${c.gender}</span>` : ''}
+        ${c.age ? `<span class="tag">${c.age}歲</span>` : ''}
+        ${c.height ? `<span class="tag">${c.height}cm</span>` : ''}
+      </div>
+      ${c.personality ? `<div class="cc-excerpt">${c.personality}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+//  SIMPLE ENTITIES (items / factions / terms)
+// ══════════════════════════════════════════
+function openSimpleModal(type, id) {
+  document.getElementById('sm-type').value = type;
+  document.getElementById('sm-edit-id').value = id || '';
+  const titles = { item:'道具 / 物品', faction:'勢力 / 組織', term:'術語 / 名詞' };
+  document.getElementById('simple-modal-title').textContent = (id?'編輯':'新增') + titles[type];
+  document.getElementById('sm-delete-btn').style.display = id ? '' : 'none';
+  document.getElementById('sm-name').value = '';
+  document.getElementById('sm-tag').value = '';
+  document.getElementById('sm-desc').value = '';
+  document.getElementById('sm-custom-fields-list').innerHTML = '';
+  if (id) {
+    const arr = type==='item'?S.items:type==='faction'?S.factions:S.terms;
+    const obj = arr.find(x=>x.id===id);
+    if (obj) {
+      document.getElementById('sm-name').value = obj.name || '';
+      document.getElementById('sm-tag').value = obj.tag || '';
+      document.getElementById('sm-desc').value = obj.desc || '';
+      (obj.customFields||[]).forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'custom-field-row';
+        row.innerHTML = `<input type="text" class="custom-field-key" placeholder="欄位名稱" value="${f.key}">
+          <input type="text" placeholder="內容" value="${f.value}">
+          <button class="btn-icon" onclick="this.parentNode.remove()">✕</button>`;
+        document.getElementById('sm-custom-fields-list').appendChild(row);
+      });
+    }
+  }
+  openModal('simple-modal');
+}
+function addCustomField(prefix) {
+  const listId = prefix ? 'sm-custom-fields-list' : 'custom-fields-list';
+  const row = document.createElement('div');
+  row.className = 'custom-field-row';
+  row.innerHTML = `<input type="text" class="custom-field-key" placeholder="欄位名稱">
+    <input type="text" placeholder="內容">
+    <button class="btn-icon" onclick="this.parentNode.remove()">✕</button>`;
+  document.getElementById(listId).appendChild(row);
+}
+function getSMCustomFields() {
+  return Array.from(document.querySelectorAll('#sm-custom-fields-list .custom-field-row')).map(row => {
+    const inputs = row.querySelectorAll('input');
+    return { key: inputs[0].value.trim(), value: inputs[1].value.trim() };
+  }).filter(f => f.key);
+}
+function saveSimple() {
+  const type = document.getElementById('sm-type').value;
+  const name = document.getElementById('sm-name').value.trim();
+  if (!name) { alert('請輸入名稱'); return; }
+  const editId = document.getElementById('sm-edit-id').value;
+  const obj = { id: editId||uid(), name, tag: gv('sm-tag'), desc: gv('sm-desc'), customFields: getSMCustomFields() };
+  const arr = type==='item'?S.items:type==='faction'?S.factions:S.terms;
+  if (editId) { const i = arr.findIndex(x=>x.id===editId); if(i>=0) arr[i]=obj; else arr.push(obj); }
+  else arr.push(obj);
+  save(); closeModal('simple-modal'); renderSimpleGrid(type); updateCounts();
+}
+function deleteSimple() {
+  const type = document.getElementById('sm-type').value;
+  const id = document.getElementById('sm-edit-id').value;
+  if (!confirm('確定刪除？')) return;
+  const key = type==='item'?'items':type==='faction'?'factions':'terms';
+  S[key] = S[key].filter(x=>x.id!==id);
+  save(); closeModal('simple-modal'); renderSimpleGrid(type); updateCounts();
+}
+function renderSimpleGrid(type) {
+  const arr = type==='item'?S.items:type==='faction'?S.factions:S.terms;
+  const grid = document.getElementById(type+'-grid');
+  if (!arr.length) { grid.innerHTML = '<div class="empty">尚無資料，點擊新增</div>'; return; }
+  grid.innerHTML = arr.map(obj => `
+    <div class="char-card" onclick="openSimpleModal('${type}','${obj.id}')">
+      <div class="cc-name">${obj.name}</div>
+      ${obj.tag ? `<div class="tag-row"><span class="tag gold">${obj.tag}</span></div>` : ''}
+      ${obj.desc ? `<div class="cc-excerpt">${obj.desc}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+//  WORLDVIEW
+// ══════════════════════════════════════════
+function loadWorldForm() {
+  const w = S.world;
+  document.getElementById('w-name').value = w.name || '';
+  document.getElementById('w-type').value = w.type || '奇幻';
+  document.getElementById('w-desc').value = w.desc || '';
+  ['history','magic','factions','geo','races','misc'].forEach(k => {
+    document.getElementById('w-'+k).value = w[k] || '';
+  });
+}
+function saveWorld() {
+  S.world = {
+    name: gv('w-name'), type: gv('w-type'), desc: gv('w-desc'),
+    history: gv('w-history'), magic: gv('w-magic'), factions: gv('w-factions'),
+    geo: gv('w-geo'), races: gv('w-races'), misc: gv('w-misc')
+  };
+  save();
+  const msg = document.getElementById('world-saved');
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 2000);
+}
+async function aiSuggestWorld() {
+  if (!apiKey) { alert('請先在設定頁面輸入 API Key'); return; }
+  const w = S.world;
+  const context = `世界名稱：${w.name||'未命名'}\n世界類型：${w.type||'奇幻'}\n概述：${w.desc||''}`;
+  const prompt = `根據以下世界觀資訊，幫我以${aiLang}補充和完善世界觀設定（歷史、魔法規則、勢力、地理、種族），以 JSON 格式回傳：{"history":"...","magic":"...","factions":"...","geo":"...","races":"..."}\n\n${context}`;
+  const btn = event.target;
+  btn.textContent = '✨ 思考中…';
+  btn.disabled = true;
+  try {
+    const res = await callClaude([{role:'user',content:prompt}]);
+    const json = JSON.parse(res.replace(/```json|```/g,'').trim());
+    ['history','magic','factions','geo','races'].forEach(k => {
+      if (json[k]) {
+        const el = document.getElementById('w-'+k);
+        if (el && !el.value) el.value = json[k];
+        else if (el && json[k]) el.value = el.value + '\n\n[AI 補充]\n' + json[k];
+      }
+    });
+  } catch(e) { alert('AI 回覆解析失敗，請重試'); }
+  btn.textContent = '✨ AI 協助整理';
+  btn.disabled = false;
+}
+
+// ══════════════════════════════════════════
+//  NOVEL — IMPORT CHARS
+// ══════════════════════════════════════════
+function importCharsToNovel() {
+  if (!S.chars.length) { alert('素材庫中尚無角色'); return; }
+  const list = S.chars.map(c => `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;cursor:pointer">
+    <input type="checkbox" value="${c.id}" ${S.novelChars.includes(c.id)?'checked':''}> ${c.name}${c.role?' · '+c.role:''}</label>`).join('');
+  const div = document.createElement('div');
+  div.innerHTML = `<div style="max-height:300px;overflow-y:auto">${list}</div>`;
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg open';
+  modal.innerHTML = `<div class="modal">
+    <h2>選擇要導入的角色</h2>
+    <div style="max-height:300px;overflow-y:auto;margin-bottom:1rem">${list}</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="this.closest('.modal-bg').remove()">取消</button>
+      <button class="btn btn-primary" onclick="
+        S.novelChars = Array.from(this.closest('.modal').querySelectorAll('input:checked')).map(x=>x.value);
+        save(); renderNovelCharsList(); renderGraph();
+        this.closest('.modal-bg').remove();
+      ">確認導入</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function renderNovelCharsList() {
+  const list = document.getElementById('novel-chars-list');
+  const imported = S.novelChars.map(id => S.chars.find(c=>c.id===id)).filter(Boolean);
+  list.innerHTML = imported.map(c =>
+    `<div style="font-size:0.75rem;color:var(--text-2);padding:0.25rem 0;border-bottom:1px solid var(--border)">${c.name}</div>`
+  ).join('') || '<div style="font-size:0.72rem;color:var(--text-3)">尚未導入</div>';
+}
+
+// ══════════════════════════════════════════
+//  RELATIONS
+// ══════════════════════════════════════════
+function openRelModal() {
+  const importedChars = S.novelChars.map(id=>S.chars.find(c=>c.id===id)).filter(Boolean);
+  if (importedChars.length < 2) { alert('請先導入至少 2 個角色'); return; }
+  const opts = importedChars.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('rm-a').innerHTML = opts;
+  document.getElementById('rm-b').innerHTML = opts;
+  document.getElementById('rm-desc').value = '';
+  document.getElementById('rm-detail').value = '';
+  openModal('rel-modal');
+}
+function saveRelation() {
+  const a = document.getElementById('rm-a').value;
+  const b = document.getElementById('rm-b').value;
+  const desc = document.getElementById('rm-desc').value.trim();
+  if (!a || !b || a===b) { alert('請選擇兩個不同的角色'); return; }
+  if (!desc) { alert('請輸入關係描述'); return; }
+  S.relations.push({ id:uid(), a, b, desc, detail: gv('rm-detail') });
+  save(); closeModal('rel-modal'); renderRelList(); renderGraph();
+}
+function deleteRelation(id) {
+  S.relations = S.relations.filter(r=>r.id!==id);
+  save(); renderRelList(); renderGraph();
+}
+function renderRelList() {
+  const list = document.getElementById('rel-list');
+  if (!S.relations.length) { list.innerHTML = '<div style="color:var(--text-3);font-size:0.8rem;padding:0.5rem 0">尚無關係</div>'; return; }
+  list.innerHTML = S.relations.map(r => {
+    const ca = S.chars.find(c=>c.id===r.a), cb = S.chars.find(c=>c.id===r.b);
+    if (!ca||!cb) return '';
+    return `<div style="display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.75rem;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius)">
+      <span style="font-size:0.85rem;font-family:'Noto Serif TC',serif">${ca.name}</span>
+      <span style="color:var(--gold-dim)">⟷</span>
+      <span style="font-size:0.85rem;font-family:'Noto Serif TC',serif">${cb.name}</span>
+      <span style="color:var(--text-3);font-size:0.78rem;flex:1">${r.desc}</span>
+      <button class="btn-icon" onclick="deleteRelation('${r.id}')">✕</button>
+    </div>`;
+  }).filter(Boolean).join('');
+}
+
+// ══════════════════════════════════════════
+//  RELATIONSHIP GRAPH
+// ══════════════════════════════════════════
+function renderGraph() {
+  const canvas = document.getElementById('rel-canvas');
+  const svg = document.getElementById('rel-svg');
+  const empty = document.getElementById('rel-empty');
+  canvas.querySelectorAll('.rel-node, .rel-edge-label').forEach(el=>el.remove());
+  svg.innerHTML = '';
+  const involved = new Set();
+  S.relations.forEach(r=>{ involved.add(r.a); involved.add(r.b); });
+  S.novelChars.forEach(id=>involved.add(id));
+  const chars = S.novelChars.map(id=>S.chars.find(c=>c.id===id)).filter(Boolean);
+  if (!chars.length) { empty.style.display='flex'; return; }
+  empty.style.display='none';
+  const W = canvas.clientWidth||620, H = canvas.clientHeight||440;
+  const cx=W/2, cy=H/2, r=Math.min(W,H)*0.32;
+  chars.forEach((c,i)=>{
+    if (!S.nodePos[c.id]) {
+      const a=(i/chars.length)*2*Math.PI - Math.PI/2;
+      S.nodePos[c.id]={x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)};
+    }
+  });
+  // edges
+  S.relations.forEach(r=>{
+    const pa=S.nodePos[r.a], pb=S.nodePos[r.b];
+    if(!pa||!pb) return;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',pa.x); line.setAttribute('y1',pa.y);
+    line.setAttribute('x2',pb.x); line.setAttribute('y2',pb.y);
+    line.setAttribute('stroke','rgba(200,150,60,0.4)');
+    line.setAttribute('stroke-width','1.5');
+    line.setAttribute('stroke-dasharray','5 4');
+    svg.appendChild(line);
+    const lbl=document.createElement('div');
+    lbl.className='rel-edge-label';
+    lbl.style.left=(pa.x+pb.x)/2+'px';
+    lbl.style.top=(pa.y+pb.y)/2+'px';
+    lbl.textContent=r.desc;
+    canvas.appendChild(lbl);
+  });
+  // nodes
+  chars.forEach(c=>{
+    const p=S.nodePos[c.id];
+    const node=document.createElement('div');
+    node.className='rel-node';
+    node.dataset.id=c.id;
+    node.style.left=p.x+'px'; node.style.top=p.y+'px';
+    node.textContent=c.name;
+    node.addEventListener('mousedown',startNodeDrag);
+    canvas.appendChild(node);
+  });
+}
+
+let _drag=null, _dragOff={x:0,y:0};
+function startNodeDrag(e) {
+  _drag=e.currentTarget;
+  const p=S.nodePos[_drag.dataset.id];
+  const rect=_drag.parentElement.getBoundingClientRect();
+  _dragOff.x=e.clientX-rect.left-p.x;
+  _dragOff.y=e.clientY-rect.top-p.y;
+  _drag.style.cursor='grabbing';
+  document.addEventListener('mousemove',onNodeDrag);
+  document.addEventListener('mouseup',stopNodeDrag);
+}
+function onNodeDrag(e) {
+  if(!_drag) return;
+  const canvas=document.getElementById('rel-canvas');
+  const rect=canvas.getBoundingClientRect();
+  const x=Math.max(33,Math.min(rect.width-33,e.clientX-rect.left-_dragOff.x));
+  const y=Math.max(33,Math.min(rect.height-33,e.clientY-rect.top-_dragOff.y));
+  S.nodePos[_drag.dataset.id]={x,y};
+  _drag.style.left=x+'px'; _drag.style.top=y+'px';
+  const svg=document.getElementById('rel-svg');
+  svg.innerHTML='';
+  document.getElementById('rel-canvas').querySelectorAll('.rel-edge-label').forEach(el=>el.remove());
+  S.relations.forEach(r=>{
+    const pa=S.nodePos[r.a], pb=S.nodePos[r.b];
+    if(!pa||!pb) return;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',pa.x); line.setAttribute('y1',pa.y);
+    line.setAttribute('x2',pb.x); line.setAttribute('y2',pb.y);
+    line.setAttribute('stroke','rgba(200,150,60,0.4)');
+    line.setAttribute('stroke-width','1.5');
+    line.setAttribute('stroke-dasharray','5 4');
+    svg.appendChild(line);
+    const lbl=document.createElement('div');
+    lbl.className='rel-edge-label';
+    lbl.style.left=(pa.x+pb.x)/2+'px';
+    lbl.style.top=(pa.y+pb.y)/2+'px';
+    lbl.textContent=r.desc;
+    document.getElementById('rel-canvas').appendChild(lbl);
+  });
+}
+function stopNodeDrag() { if(_drag) _drag.style.cursor='grab'; _drag=null; document.removeEventListener('mousemove',onNodeDrag); document.removeEventListener('mouseup',stopNodeDrag); }
+
+// ══════════════════════════════════════════
+//  MAP
+// ══════════════════════════════════════════
+function handleMapClick(e) {
+  const canvas=document.getElementById('map-canvas');
+  const rect=canvas.getBoundingClientRect();
+  const x=((e.clientX-rect.left)/rect.width*100).toFixed(2);
+  const y=((e.clientY-rect.top)/rect.height*100).toFixed(2);
+  document.getElementById('mp-x').value=x;
+  document.getElementById('mp-y').value=y;
+  document.getElementById('mp-name').value='';
+  document.getElementById('mp-type').value='城市';
+  document.getElementById('mp-desc').value='';
+  openModal('map-modal');
+}
+function addMapPin() {
+  document.getElementById('mp-x').value=50;
+  document.getElementById('mp-y').value=50;
+  document.getElementById('mp-name').value='';
+  openModal('map-modal');
+}
+function saveMapPin() {
+  const name=document.getElementById('mp-name').value.trim();
+  if (!name) { alert('請輸入地點名稱'); return; }
+  S.mapPins.push({ id:uid(), name, type:gv('mp-type'), desc:gv('mp-desc'),
+    x:parseFloat(document.getElementById('mp-x').value),
+    y:parseFloat(document.getElementById('mp-y').value) });
+  save(); closeModal('map-modal'); renderMapPins();
+}
+function clearMap() { if (confirm('清空地圖所有地點？')) { S.mapPins=[]; save(); renderMapPins(); } }
+function renderMapPins() {
+  const canvas=document.getElementById('map-canvas');
+  canvas.querySelectorAll('.map-pin').forEach(el=>el.remove());
+  const empty=document.getElementById('map-empty');
+  empty.style.display=S.mapPins.length?'none':'flex';
+  S.mapPins.forEach(p=>{
+    const pin=document.createElement('div');
+    pin.className='map-pin';
+    pin.style.left=p.x+'%'; pin.style.top=p.y+'%';
+    pin.innerHTML=`<div class="map-pin-dot"></div><div class="map-pin-label">${p.name}</div>`;
+    pin.title=p.desc||p.type;
+    canvas.appendChild(pin);
+  });
+  const list=document.getElementById('map-pins-list');
+  list.innerHTML=S.mapPins.map(p=>`
+    <div style="display:flex;align-items:center;gap:0.6rem;padding:0.4rem 0.75rem;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius)">
+      <span style="color:var(--gold);font-size:0.78rem">📍</span>
+      <span style="font-family:'Noto Serif TC',serif;font-size:0.85rem">${p.name}</span>
+      <span style="color:var(--text-3);font-size:0.73rem">${p.type}</span>
+      ${p.desc?`<span style="color:var(--text-2);font-size:0.75rem;flex:1">${p.desc}</span>`:'<span style="flex:1"></span>'}
+      <button class="btn-icon" onclick="deleteMapPin('${p.id}')">✕</button>
+    </div>
+  `).join('');
+}
+function deleteMapPin(id) { S.mapPins=S.mapPins.filter(p=>p.id!==id); save(); renderMapPins(); }
+
+// ══════════════════════════════════════════
+//  TIMELINE
+// ══════════════════════════════════════════
+function openTLModal(id) {
+  document.getElementById('tl-edit-id').value = id||'';
+  document.getElementById('tl-modal-title').textContent = id?'編輯事件':'新增事件';
+  document.getElementById('tl-delete-btn').style.display = id?'':'none';
+  document.getElementById('tl-date').value='';
+  document.getElementById('tl-title').value='';
+  document.getElementById('tl-desc').value='';
+  document.getElementById('tl-type').value='歷史';
+  if (id) {
+    const ev=S.timeline.find(x=>x.id===id);
+    if (ev) { document.getElementById('tl-date').value=ev.date||''; document.getElementById('tl-title').value=ev.title||''; document.getElementById('tl-desc').value=ev.desc||''; document.getElementById('tl-type').value=ev.type||'歷史'; }
+  }
+  openModal('tl-modal');
+}
+function saveTL() {
+  const title=document.getElementById('tl-title').value.trim();
+  if (!title) { alert('請輸入事件標題'); return; }
+  const editId=document.getElementById('tl-edit-id').value;
+  const ev={ id:editId||uid(), date:gv('tl-date'), title, desc:gv('tl-desc'), type:gv('tl-type') };
+  if (editId) { const i=S.timeline.findIndex(x=>x.id===editId); if(i>=0) S.timeline[i]=ev; else S.timeline.push(ev); }
+  else S.timeline.push(ev);
+  save(); closeModal('tl-modal'); renderTimeline();
+}
+function deleteTL() {
+  const id=document.getElementById('tl-edit-id').value;
+  if (!confirm('確定刪除？')) return;
+  S.timeline=S.timeline.filter(x=>x.id!==id);
+  save(); closeModal('tl-modal'); renderTimeline();
+}
+function renderTimeline() {
+  const list=document.getElementById('timeline-list');
+  if (!S.timeline.length) { list.innerHTML='<div class="empty">尚無事件，點擊新增</div>'; return; }
+  list.innerHTML=S.timeline.map(ev=>`
+    <div class="tl-event" onclick="openTLModal('${ev.id}')">
+      <div class="tl-date">${ev.date||'未標記時間'} · ${ev.type}</div>
+      <div class="tl-title">${ev.title}</div>
+      ${ev.desc?`<div class="tl-desc">${ev.desc}</div>`:''}
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+//  PLOT
+// ══════════════════════════════════════════
+function openPlotModal(id) {
+  document.getElementById('pm-edit-id').value=id||'';
+  document.getElementById('plot-modal-title').textContent=id?'編輯劇情卡':'新增劇情卡';
+  document.getElementById('pm-delete-btn').style.display=id?'':'none';
+  document.getElementById('pm-title').value='';
+  document.getElementById('pm-desc').value='';
+  document.getElementById('pm-chars').value='';
+  document.getElementById('pm-lane').value='idea';
+  if (id) {
+    const p=S.plot.find(x=>x.id===id);
+    if (p) { document.getElementById('pm-title').value=p.title||''; document.getElementById('pm-desc').value=p.desc||''; document.getElementById('pm-chars').value=p.chars||''; document.getElementById('pm-lane').value=p.lane||'idea'; }
+  }
+  openModal('plot-modal');
+}
+function savePlot() {
+  const title=document.getElementById('pm-title').value.trim();
+  if (!title) { alert('請輸入標題'); return; }
+  const editId=document.getElementById('pm-edit-id').value;
+  const p={ id:editId||uid(), title, desc:gv('pm-desc'), chars:gv('pm-chars'), lane:gv('pm-lane') };
+  if (editId) { const i=S.plot.findIndex(x=>x.id===editId); if(i>=0) S.plot[i]=p; else S.plot.push(p); }
+  else S.plot.push(p);
+  save(); closeModal('plot-modal'); renderPlot();
+}
+function deletePlot() {
+  const id=document.getElementById('pm-edit-id').value;
+  if (!confirm('確定刪除？')) return;
+  S.plot=S.plot.filter(x=>x.id!==id);
+  save(); closeModal('plot-modal'); renderPlot();
+}
+function renderPlot() {
+  const lanes=['idea','draft','wip','done'];
+  lanes.forEach(lane=>{
+    const el=document.getElementById('plot-lane-'+lane);
+    const cards=S.plot.filter(p=>p.lane===lane);
+    el.innerHTML=cards.map(p=>`
+      <div class="plot-card" onclick="openPlotModal('${p.id}')">
+        <div style="font-family:'Noto Serif TC',serif;font-size:0.8rem;font-weight:700;color:var(--text-1);margin-bottom:0.25rem">${p.title}</div>
+        ${p.chars?`<div style="font-size:0.68rem;color:var(--text-3)">👥 ${p.chars}</div>`:''}
+        ${p.desc?`<div style="font-size:0.73rem;color:var(--text-2);margin-top:0.25rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.desc}</div>`:''}
+      </div>
+    `).join('');
+  });
+}
+
+// ══════════════════════════════════════════
+//  PROSE EDITOR
+// ══════════════════════════════════════════
+document.getElementById('prose-editor').addEventListener('input', function() {
+  S.prose=this.value;
+  updateWordCount();
+});
+function updateWordCount() {
+  const text=document.getElementById('prose-editor').value;
+  document.getElementById('prose-wc').textContent=text.replace(/\s/g,'').length+' 字';
+}
+function saveProse() { save(); const btn=event.target; btn.textContent='✓ 已儲存'; setTimeout(()=>btn.textContent='💾 儲存',1500); }
+async function aiWriteAssist() {
+  if (!apiKey) { alert('請先在設定中輸入 API Key'); return; }
+  const prose=document.getElementById('prose-editor').value;
+  const context=buildContext();
+  const prompt=`${context}\n\n目前正文：\n${prose}\n\n請以${aiLang}幫我繼續寫這個故事，保持原有的文風和節奏，續寫約 200-300 字。`;
+  const btn=event.target; btn.textContent='✨ 思考中…'; btn.disabled=true;
+  try {
+    const res=await callClaude([{role:'user',content:prompt}]);
+    document.getElementById('prose-editor').value=prose+(prose&&!prose.endsWith('\n')?'\n':'')+res;
+    S.prose=document.getElementById('prose-editor').value;
+    save(); updateWordCount();
+  } catch(e) { alert('AI 回覆失敗，請確認 API Key 是否正確'); }
+  btn.textContent='✨ AI 續寫'; btn.disabled=false;
+}
+
+// ══════════════════════════════════════════
+//  AI CHAT
+// ══════════════════════════════════════════
+function buildContext() {
+  const chars=S.novelChars.map(id=>S.chars.find(c=>c.id===id)).filter(Boolean)
+    .map(c=>`角色：${c.name}（${c.role||''}），${c.personality||''}`).join('\n');
+  const w=S.world;
+  return `【世界觀】${w.name||''}（${w.type||''}）：${w.desc||''}\n【角色】\n${chars||'無'}`;
+}
+function buildLibContext() {
+  const chars=S.chars.slice(0,5).map(c=>`${c.name}（${c.role||''}）`).join('、');
+  const w=S.world;
+  return `【素材庫】世界：${w.name||'未命名'}，角色：${chars||'無'}`;
+}
+
+async function sendAI(panel) {
+  if (!apiKey) { alert('請先在設定中輸入 Claude API Key'); return; }
+  const input=document.getElementById(panel+'-ai-input');
+  const msg=input.value.trim();
+  if (!msg) return;
+  input.value='';
+  addAIMsg(panel,'user',msg);
+  const thinking=addAIMsg(panel,'thinking','✦ 思考中…');
+  const context=panel==='novel'?buildContext():buildLibContext();
+  const history=aiChats[panel].filter(m=>m.role!=='thinking').slice(-10).map(m=>({role:m.role,content:m.content}));
+  const sysPrompt=`你是一個${aiLang}創作助理，幫助創作者發展世界觀和角色。${context}`;
+  try {
+    const res=await callClaude([...history,{role:'user',content:msg}],sysPrompt);
+    thinking.remove();
+    aiChats[panel].push({role:'user',content:msg},{role:'assistant',content:res});
+    addAIMsg(panel,'assistant',res);
+  } catch(e) {
+    thinking.textContent='❌ 發生錯誤，請確認 API Key';
+    thinking.classList.remove('thinking');
+  }
+}
+
+function addAIMsg(panel,type,text) {
+  const msgs=document.getElementById(panel+'-ai-msgs');
+  const div=document.createElement('div');
+  div.className='ai-msg '+(type==='thinking'?'thinking':type);
+  div.textContent=text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
+function clearAIChat(panel) {
+  aiChats[panel]=[];
+  const msgs=document.getElementById(panel+'-ai-msgs');
+  msgs.innerHTML=`<div class="ai-msg assistant">${panel==='novel'?'我是你的寫作助理！':'你好！我是你的創作助理。'}</div>`;
+}
+
+function quickAsk(panel,q) {
+  document.getElementById(panel+'-ai-input').value=q;
+  sendAI(panel);
+}
+
+function aiKeyDown(e,panel) {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendAI(panel); }
+}
+
+async function aiFieldSuggest(fieldId, fieldName) {
+  if (!apiKey) { alert('請先輸入 API Key'); return; }
+  const name=document.getElementById('c-name')?.value || document.getElementById('sm-name')?.value || '';
+  const current=document.getElementById(fieldId).value;
+  const context=`角色/物品名稱：${name}，目前的${fieldName}：${current||'（空白）'}`;
+  const btn=event.target; btn.textContent='…'; btn.disabled=true;
+  try {
+    const res=await callClaude([{role:'user',content:`根據以下資訊，為「${fieldName}」欄位提供一段生動有趣的描述（約 50-150 字），以${aiLang}回答，只輸出描述內容本身：\n${context}`}]);
+    document.getElementById(fieldId).value=(current?(current+'\n'):'') + res.trim();
+  } catch(e) { alert('AI 建議失敗'); }
+  btn.textContent='✨ AI 建議'; btn.disabled=false;
+}
+
+async function callClaude(messages, systemPrompt) {
+  const body={
+    model:'claude-sonnet-4-20250514',
+    max_tokens:1000,
+    messages
+  };
+  if (systemPrompt) body.system=systemPrompt;
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+    body:JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('API error '+res.status);
+  const data=await res.json();
+  return data.content.map(b=>b.text||'').join('');
+}
+
+// ══════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════
+function setTheme(t, chip) {
+  document.body.dataset.theme=t;
+  localStorage.setItem('wf2-theme',t);
+  document.querySelectorAll('.theme-chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+}
+
+function changeFontSize(delta) {
+  fontSizePx=Math.max(12,Math.min(22,fontSizePx+delta));
+  document.documentElement.style.setProperty('--fs',fontSizePx+'px');
+  localStorage.setItem('wf2-fs',fontSizePx);
+  document.getElementById('font-size-display').textContent=fontSizePx+'px';
+}
+
+function applyBodyFont() {
+  const f=document.getElementById('body-font').value;
+  document.body.style.fontFamily=f;
+}
+
+function saveApiKey() {
+  apiKey=document.getElementById('api-key-input').value.trim();
+  localStorage.setItem('wf2-key',apiKey);
+  updateKeyNote();
+  const badge=document.getElementById('api-status-badge');
+  badge.style.display='';
+  badge.className='api-status ok';
+  badge.textContent='已儲存';
+  setTimeout(()=>badge.style.display='none',2000);
+}
+
+function updateKeyNote() {
+  const note=apiKey?'API Key 已設定，AI 功能已啟用':'請在設定中輸入 Claude API Key';
+  document.querySelectorAll('.ai-key-note').forEach(el=>el.textContent=note);
+}
+
+// ══════════════════════════════════════════
+//  I18N
+// ══════════════════════════════════════════
+const i18n = {
+  'zh-TW': { characters:'角色', all_chars:'全部角色', add_char:'新增角色', worldview:'世界觀', world_settings:'世界設定', world_name:'世界名稱', world_type:'世界類型', world_desc:'整體描述', others:'其他素材', items:'道具 / 物品', factions:'勢力 / 組織', terms:'術語 / 名詞' },
+  'zh-CN': { characters:'角色', all_chars:'全部角色', add_char:'新增角色', worldview:'世界观', world_settings:'世界设定', world_name:'世界名称', world_type:'世界类型', world_desc:'整体描述', others:'其他素材', items:'道具 / 物品', factions:'势力 / 组织', terms:'术语 / 名词' },
+  'en':    { characters:'Characters', all_chars:'All Characters', add_char:'Add Character', worldview:'World', world_settings:'World Settings', world_name:'World Name', world_type:'Type', world_desc:'Overview', others:'Other Materials', items:'Items / Props', factions:'Factions / Orgs', terms:'Terms / Glossary' },
+  'ja':    { characters:'キャラクター', all_chars:'すべてのキャラクター', add_char:'追加', worldview:'世界観', world_settings:'世界設定', world_name:'世界名', world_type:'種類', world_desc:'概要', others:'その他', items:'アイテム', factions:'勢力 / 組織', terms:'用語集' }
+};
+function setLang(lang) {
+  localStorage.setItem('wf2-lang',lang);
+  applyLang(lang);
+}
+function applyLang(lang) {
+  const t=i18n[lang]||i18n['zh-TW'];
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.dataset.i18n;
+    if (t[key]) el.textContent=t[key];
+  });
+}
+
+// ══════════════════════════════════════════
+//  DATA EXPORT / IMPORT
+// ══════════════════════════════════════════
+function exportData() {
+  const json=JSON.stringify(S,null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+  a.download='worldforge-backup.json';
+  a.click();
+}
+function importData() { document.getElementById('import-input').click(); }
+function handleImport(e) {
+  const file=e.target.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      const data=JSON.parse(ev.target.result);
+      Object.assign(S,data);
+      save(); renderAll(); alert('匯入成功！');
+    } catch(err) { alert('匯入失敗，請確認檔案格式'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+function clearAllData() {
+  if (!confirm('確定要清除全部資料？此操作不可逆！')) return;
+  S={ chars:[], items:[], factions:[], terms:[], world:{}, relations:[], mapPins:[], timeline:[], plot:[], novelChars:[], prose:'', nodePos:{} };
+  save(); renderAll();
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function gv(id) { const el=document.getElementById(id); return el?el.value.trim():''; }
+function updateCounts() {
+  document.getElementById('char-count').textContent=S.chars.length;
+  document.getElementById('item-count').textContent=S.items.length;
+  document.getElementById('faction-count').textContent=S.factions.length;
+  document.getElementById('term-count').textContent=S.terms.length;
+}
+</script>
+</body>
+</html>
