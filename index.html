@@ -628,6 +628,10 @@ const DH='<svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" st
 const DEF=()=>({chars:[],items:[],factions:[],terms:[],world:{},relations:[],mapPins:[],mapBg:'',timeline:[],plot:[],novelChars:[],chapters:[],nodePos:{}});
 let S=DEF(),fsPx=15,curChapId=null,tlFilter='全部',charTagFilter='';
 
+/* I18N */
+const LANG={'zh-TW':{nav_library:'素材庫',nav_novel:'小說工作區',nav_settings:'設定',characters:'角色',all_chars:'全部角色',add_char:'新增角色',worldview:'世界觀',world_settings:'世界設定',world_name:'世界名稱',world_type:'世界類型',world_desc:'整體描述',others:'其他素材',items:'道具 / 物品',factions:'勢力 / 組織',terms:'術語 / 名詞'},'zh-CN':{nav_library:'素材库',nav_novel:'小说工作区',nav_settings:'设定',characters:'角色',all_chars:'全部角色',add_char:'新增角色',worldview:'世界观',world_settings:'世界设定',world_name:'世界名称',world_type:'世界类型',world_desc:'整体描述',others:'其他素材',items:'道具 / 物品',factions:'势力 / 组织',terms:'术语 / 名词'},'en':{nav_library:'Library',nav_novel:'Novel Workspace',nav_settings:'Settings',characters:'Characters',all_chars:'All Characters',add_char:'Add Character',worldview:'World',world_settings:'World Settings',world_name:'World Name',world_type:'Type',world_desc:'Overview',others:'Other Materials',items:'Items / Props',factions:'Factions / Orgs',terms:'Terms / Glossary'},'ja':{nav_library:'素材ライブラリ',nav_novel:'小説ワークスペース',nav_settings:'設定',characters:'キャラクター',all_chars:'すべてのキャラクター',add_char:'追加',worldview:'世界観',world_settings:'世界設定',world_name:'世界名',world_type:'種類',world_desc:'概要',others:'その他',items:'アイテム',factions:'勢力 / 組織',terms:'用語集'}};
+const CF=['name','alias','age','height','weight','role','faction','appearance','personality','backstory','skills','motivation','notes','birthday','tags'];
+const TL_TYPES=['全部','歷史','戰爭','政治','個人','其他'];
 (function init(){
   try{const d=localStorage.getItem('wf6');if(d)Object.assign(S,JSON.parse(d));}catch(e){}
   fsPx=+localStorage.getItem('wf6-fs')||15;
@@ -758,7 +762,7 @@ function getCF(listId){
 }
 
 /* CHARS */
-const CF=['name','alias','age','height','weight','role','faction','appearance','personality','backstory','skills','motivation','notes','birthday','tags'];
+
 function openCharModal(id){
   CF.forEach(f=>{const el=document.getElementById('c-'+f);if(el)el.value='';});
   ['c-gender','c-align','c-blood','c-role-level'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
@@ -1096,7 +1100,7 @@ function renderMapPins(){
 }
 
 /* TIMELINE */
-const TL_TYPES=['全部','歷史','戰爭','政治','個人','其他'];
+
 function renderTLFilter(){document.getElementById('tl-filter').innerHTML=TL_TYPES.map(t=>`<div class="tf-chip${t===tlFilter?' active':''}" onclick="setTLFilter('${t}')">${t}</div>`).join('');}
 function setTLFilter(t){tlFilter=t;renderTLFilter();renderTimeline();}
 function openTLModal(id){
@@ -1233,8 +1237,7 @@ function setTheme(t,chip){document.body.dataset.theme=t;localStorage.setItem('wf
 function changeFontSize(d){fsPx=Math.max(12,Math.min(22,fsPx+d));document.documentElement.style.setProperty('--fs',fsPx+'px');localStorage.setItem('wf6-fs',fsPx);document.getElementById('font-size-display').textContent=fsPx+'px';}
 function applyBodyFont(){document.body.style.fontFamily=document.getElementById('body-font').value;}
 
-/* I18N */
-const LANG={'zh-TW':{nav_library:'素材庫',nav_novel:'小說工作區',nav_settings:'設定',characters:'角色',all_chars:'全部角色',add_char:'新增角色',worldview:'世界觀',world_settings:'世界設定',world_name:'世界名稱',world_type:'世界類型',world_desc:'整體描述',others:'其他素材',items:'道具 / 物品',factions:'勢力 / 組織',terms:'術語 / 名詞'},'zh-CN':{nav_library:'素材库',nav_novel:'小说工作区',nav_settings:'设定',characters:'角色',all_chars:'全部角色',add_char:'新增角色',worldview:'世界观',world_settings:'世界设定',world_name:'世界名称',world_type:'世界类型',world_desc:'整体描述',others:'其他素材',items:'道具 / 物品',factions:'势力 / 组织',terms:'术语 / 名词'},'en':{nav_library:'Library',nav_novel:'Novel Workspace',nav_settings:'Settings',characters:'Characters',all_chars:'All Characters',add_char:'Add Character',worldview:'World',world_settings:'World Settings',world_name:'World Name',world_type:'Type',world_desc:'Overview',others:'Other Materials',items:'Items / Props',factions:'Factions / Orgs',terms:'Terms / Glossary'},'ja':{nav_library:'素材ライブラリ',nav_novel:'小説ワークスペース',nav_settings:'設定',characters:'キャラクター',all_chars:'すべてのキャラクター',add_char:'追加',worldview:'世界観',world_settings:'世界設定',world_name:'世界名',world_type:'種類',world_desc:'概要',others:'その他',items:'アイテム',factions:'勢力 / 組織',terms:'用語集'}};
+
 function setLang(lang){localStorage.setItem('wf6-lang',lang);applyLang(lang);}
 function applyLang(lang){const t=LANG[lang]||LANG['zh-TW'];document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(t[k])el.textContent=t[k];});}
 
