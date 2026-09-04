@@ -245,6 +245,13 @@ textarea{resize:vertical;min-height:70px;line-height:1.7}
 hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
 .ntc{display:none}.ntc.active{display:block}
 .rel-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.3rem;vertical-align:middle}
+.novel-tab{display:flex;align-items:center;gap:.35rem;padding:.32rem .55rem;border-radius:var(--r);cursor:pointer;font-size:.78rem;color:var(--t2);transition:all .15s;user-select:none;border:1px solid transparent}
+.novel-tab:hover{background:var(--bghov);color:var(--t1)}
+.novel-tab.active{background:var(--bg3);color:var(--gold);border-color:var(--bdrm)}
+.novel-tab-name{flex:1;font-family:'Noto Serif TC',serif;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.novel-tab-edit{opacity:0;font-size:.7rem;flex-shrink:0;background:none;border:none;color:var(--t3);cursor:pointer;padding:.1rem .2rem;border-radius:2px}
+.novel-tab:hover .novel-tab-edit{opacity:1}
+.novel-tab-edit:hover{color:var(--gold);background:var(--bghov)}
 </style>
 </head>
 <body data-theme="dark">
@@ -297,6 +304,11 @@ hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
     </div>
   </div>
   <div class="sb-ctx" id="sbctx-novel">
+    <div class="sb-sec" style="padding:.55rem 0">
+      <div class="sb-lbl" style="margin-bottom:.35rem">小說作品</div>
+      <div id="novel-switcher" style="display:flex;flex-direction:column;gap:.25rem;padding:0 .8rem"></div>
+      <button class="sb-add" onclick="addNovel()" style="margin-top:.35rem">＋ 新增小說</button>
+    </div>
     <div class="sb-sec" style="border-bottom:none;padding:.5rem 0">
       <div class="sb-lbl" style="margin-bottom:.35rem">工作區</div>
       <button class="sub-tab active" id="stab-chapters" onclick="novelTab('chapters',this)"><span class="stab-ico">📝</span>章節管理</button>
@@ -330,7 +342,7 @@ hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
       <div class="sh"><h1 data-i18n="all_chars">全部角色</h1>
         <div class="row"><button class="btn bg bs" onclick="openQuickRelModal()">🔗 快速建立關係</button><button class="btn bp" onclick="openCharModal()">＋ <span data-i18n="add_char">新增角色</span></button></div>
       </div>
-      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="char-search" placeholder="搜尋名稱、職業、勢力、標籤…" oninput="renderChars()"></div>
+      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="char-search" placeholder="搜尋名稱、職業、勢力、標籤…" oninput="_debouncedRenderChars()"></div>
       <div class="tag-filter" id="char-tag-filter"></div>
       <div class="cgrid" id="char-grid"><div class="empty">尚無角色<br>點擊右上角開始建立</div></div>
     </div>
@@ -356,17 +368,17 @@ hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
     </div>
     <div id="lib-items" class="lib-view" style="display:none">
       <div class="sh"><h1>道具 / 物品</h1><button class="btn bp" onclick="openSimpleModal('item')">＋ 新增物品</button></div>
-      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="item-search" placeholder="搜尋…" oninput="renderGrid('item')"></div>
+      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="item-search" placeholder="搜尋…" oninput="_debouncedRenderGrid('item')"></div>
       <div class="cgrid" id="item-grid"><div class="empty">尚無物品</div></div>
     </div>
     <div id="lib-factions" class="lib-view" style="display:none">
       <div class="sh"><h1>勢力 / 組織</h1><button class="btn bp" onclick="openSimpleModal('faction')">＋ 新增勢力</button></div>
-      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="faction-search" placeholder="搜尋…" oninput="renderGrid('faction')"></div>
+      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="faction-search" placeholder="搜尋…" oninput="_debouncedRenderGrid('faction')"></div>
       <div class="cgrid" id="faction-grid"><div class="empty">尚無勢力</div></div>
     </div>
     <div id="lib-terms" class="lib-view" style="display:none">
       <div class="sh"><h1>術語 / 名詞</h1><button class="btn bp" onclick="openSimpleModal('term')">＋ 新增術語</button></div>
-      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="term-search" placeholder="搜尋…" oninput="renderGrid('term')"></div>
+      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="term-search" placeholder="搜尋…" oninput="_debouncedRenderGrid('term')"></div>
       <div class="cgrid" id="term-grid"><div class="empty">尚無術語</div></div>
     </div>
   </div>
@@ -507,6 +519,7 @@ hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
     <div class="g3"><div class="field"><label>生日</label><input type="text" id="c-birthday" placeholder="例：3月15日"></div><div class="field"><label>陣營</label><select id="c-align"><option value="">──</option><option>正派</option><option>反派</option><option>中立</option><option>灰色地帶</option><option>其他</option></select></div><div class="field"><label>重要程度</label><select id="c-role-level"><option value="">──</option><option>主角</option><option>重要配角</option><option>配角</option><option>龍套</option></select></div></div>
     <div class="g2"><div class="field"><label>職業 / 身份</label><input type="text" id="c-role" placeholder="騎士、魔法師…"></div><div class="field"><label>所屬勢力</label><input type="text" id="c-faction" placeholder="組織、國家"></div></div>
     <div class="field"><label>標籤 <span style="font-weight:400;color:var(--t3);font-size:.62rem">（逗號分隔，可篩選）</span></label><input type="text" id="c-tags" placeholder="主角, 魔法使用者…"></div>
+    <div class="field"><label>所屬作品 <span style="font-weight:400;color:var(--t3);font-size:.62rem">（可多個，逗號分隔）</span></label><input type="text" id="c-works" placeholder="留空 = 通用素材"><datalist id="c-works-list"></datalist></div>
     <div class="field"><label>代表色</label><div class="color-opts" id="char-color-opts"></div></div>
     <div class="field"><label>備注</label><textarea id="c-notes" placeholder="其他細節…" style="min-height:55px"></textarea></div>
   </div>
@@ -625,15 +638,53 @@ const CHAR_COLORS=['#c8963c','#2e7d6e','#a03030','#2a5a8a','#7a3fa0','#c0782a','
 const REL_COLORS={friendly:'#2e7d6e',hostile:'#a03030',neutral:'#7a6a52'};
 const TL_COLORS={歷史:'#c8963c',戰爭:'#a03030',政治:'#2a5a8a',個人:'#2e7d6e',其他:'#7a6a52'};
 const DH='<svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" style="color:var(--t3);display:block;pointer-events:none"><circle cx="3" cy="4" r="1.4"/><circle cx="9" cy="4" r="1.4"/><circle cx="3" cy="8" r="1.4"/><circle cx="9" cy="8" r="1.4"/><circle cx="3" cy="12" r="1.4"/><circle cx="9" cy="12" r="1.4"/></svg>';
-const DEF=()=>({chars:[],items:[],factions:[],terms:[],world:{},relations:[],mapPins:[],mapBg:'',timeline:[],plot:[],novelChars:[],chapters:[],nodePos:{}});
+const DEF=()=>({chars:[],items:[],factions:[],terms:[],world:{},relations:[],mapPins:[],timeline:[],plot:[],novelChars:[],chapters:[],nodePos:{}});
+const NOVELS_DEF=()=>[];
 let S=DEF(),fsPx=15,curChapId=null,tlFilter='全部',charTagFilter='';
+let novels=[],curNovelId=null;
 
 /* I18N */
 const LANG={'zh-TW':{nav_library:'素材庫',nav_novel:'小說工作區',nav_settings:'設定',characters:'角色',all_chars:'全部角色',add_char:'新增角色',worldview:'世界觀',world_settings:'世界設定',world_name:'世界名稱',world_type:'世界類型',world_desc:'整體描述',others:'其他素材',items:'道具 / 物品',factions:'勢力 / 組織',terms:'術語 / 名詞'},'zh-CN':{nav_library:'素材库',nav_novel:'小说工作区',nav_settings:'设定',characters:'角色',all_chars:'全部角色',add_char:'新增角色',worldview:'世界观',world_settings:'世界设定',world_name:'世界名称',world_type:'世界类型',world_desc:'整体描述',others:'其他素材',items:'道具 / 物品',factions:'势力 / 组织',terms:'术语 / 名词'},'en':{nav_library:'Library',nav_novel:'Novel Workspace',nav_settings:'Settings',characters:'Characters',all_chars:'All Characters',add_char:'Add Character',worldview:'World',world_settings:'World Settings',world_name:'World Name',world_type:'Type',world_desc:'Overview',others:'Other Materials',items:'Items / Props',factions:'Factions / Orgs',terms:'Terms / Glossary'},'ja':{nav_library:'素材ライブラリ',nav_novel:'小説ワークスペース',nav_settings:'設定',characters:'キャラクター',all_chars:'すべてのキャラクター',add_char:'追加',worldview:'世界観',world_settings:'世界設定',world_name:'世界名',world_type:'種類',world_desc:'概要',others:'その他',items:'アイテム',factions:'勢力 / 組織',terms:'用語集'}};
-const CF=['name','alias','age','height','weight','role','faction','appearance','personality','backstory','skills','motivation','notes','birthday','tags'];
+const CF=['name','alias','age','height','weight','role','faction','appearance','personality','backstory','skills','motivation','notes','birthday','tags','works'];
 const TL_TYPES=['全部','歷史','戰爭','政治','個人','其他'];
+/* INDEXEDDB for map background images */
+let idb=null;
+function openIDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open('wf6-assets',1);
+    req.onupgradeneeded=e=>e.target.result.createObjectStore('imgs');
+    req.onsuccess=e=>{idb=e.target.result;res(idb);};
+    req.onerror=()=>rej(req.error);
+  });
+}
+function idbSet(key,val){return openIDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('imgs','readwrite');tx.objectStore('imgs').put(val,key);tx.oncomplete=res;tx.onerror=rej;}));}
+function idbGet(key){return openIDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('imgs','readonly');const req=tx.objectStore('imgs').get(key);req.onsuccess=()=>res(req.result);req.onerror=rej;}));}
+function idbDel(key){return openIDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('imgs','readwrite');tx.objectStore('imgs').delete(key);tx.oncomplete=res;tx.onerror=rej;}));}
+
 (function init(){
-  try{const d=localStorage.getItem('wf6');if(d)Object.assign(S,JSON.parse(d));}catch(e){}
+  try{
+    const d=localStorage.getItem('wf6');
+    if(d)Object.assign(S,JSON.parse(d));
+    const nd=localStorage.getItem('wf6-novels');
+    if(nd)novels=JSON.parse(nd);
+    if(!novels.length){
+      // create default novel
+      const def={id:uid2(),name:'我的第一本小說',created:Date.now()};
+      novels.push(def);
+      localStorage.setItem('wf6-novels',JSON.stringify(novels));
+    }
+    curNovelId=localStorage.getItem('wf6-cur-novel')||novels[0].id;
+    // load novel data
+    const novelKey='wf6-novel-'+curNovelId;
+    const novelData=localStorage.getItem(novelKey);
+    if(novelData){
+      const nd2=JSON.parse(novelData);
+      S.relations=nd2.relations||[];S.mapPins=nd2.mapPins||[];
+      S.timeline=nd2.timeline||[];S.plot=nd2.plot||[];
+      S.novelChars=nd2.novelChars||[];S.chapters=nd2.chapters||[];
+      S.nodePos=nd2.nodePos||{};
+    }
+  }catch(e){console.warn('Init error:',e);}
   fsPx=+localStorage.getItem('wf6-fs')||15;
   document.documentElement.style.setProperty('--fs',fsPx+'px');
   document.getElementById('font-size-display').textContent=fsPx+'px';
@@ -657,10 +708,84 @@ const TL_TYPES=['全部','歷史','戰爭','政治','個人','其他'];
   document.getElementById('rel-canvas').addEventListener('mouseover',onNodeHover);
   document.getElementById('rel-canvas').addEventListener('mouseout',onNodeOut);
   setInterval(()=>{if(curChapId)saveChapterContent();},60000);
+  setTimeout(applyMapBg, 200);
 })();
 
-function save(){localStorage.setItem('wf6',JSON.stringify(S));showSaved();}
+function uid2(){return Math.random().toString(36).slice(2,10);}
+function save(){
+  // Save shared library data
+  const libData={chars:S.chars,items:S.items,factions:S.factions,terms:S.terms,world:S.world};
+  localStorage.setItem('wf6',JSON.stringify(libData));
+  // Save novel-specific data separately
+  if(curNovelId){
+    const novelData={relations:S.relations,mapPins:S.mapPins,timeline:S.timeline,plot:S.plot,novelChars:S.novelChars,chapters:S.chapters,nodePos:S.nodePos};
+    localStorage.setItem('wf6-novel-'+curNovelId,JSON.stringify(novelData));
+  }
+  localStorage.setItem('wf6-novels',JSON.stringify(novels));
+  showSaved();
+}
+/* NOVEL MANAGEMENT */
+function renderNovelSwitcher(){
+  const wrap=document.getElementById('novel-switcher');if(!wrap)return;
+  wrap.innerHTML=novels.map(n=>`
+    <div class="novel-tab${n.id===curNovelId?' active':''}" onclick="switchNovel('${n.id}')">
+      <span class="novel-tab-name">${esc(n.name)}</span>
+      <button class="novel-tab-edit" onclick="event.stopPropagation();editNovel('${n.id}')" title="編輯">✏</button>
+    </div>
+  `).join('');
+  // update datalist for works in char modal
+  const dl=document.getElementById('c-works-list');
+  if(dl)dl.innerHTML=novels.map(n=>`<option value="${esc(n.name)}">`).join('');
+}
+function switchNovel(id){
+  if(id===curNovelId)return;
+  // save current novel data first
+  if(curChapId)saveChapterContent();
+  save();
+  // switch to new novel
+  curNovelId=id;
+  localStorage.setItem('wf6-cur-novel',id);
+  // load new novel data
+  S.relations=[];S.mapPins=[];S.timeline=[];S.plot=[];S.novelChars=[];S.chapters=[];S.nodePos={};
+  curChapId=null;
+  const novelKey='wf6-novel-'+id;
+  try{
+    const d=localStorage.getItem(novelKey);
+    if(d){const nd=JSON.parse(d);S.relations=nd.relations||[];S.mapPins=nd.mapPins||[];S.timeline=nd.timeline||[];S.plot=nd.plot||[];S.novelChars=nd.novelChars||[];S.chapters=nd.chapters||[];S.nodePos=nd.nodePos||{};}
+  }catch(e){}
+  document.getElementById('prose-editor').value='';
+  renderNovelSwitcher();
+  renderRelList();renderGraph();renderMapPins();renderTimeline();renderPlot();renderNovelCharsList();renderChapList();updateTotalWC();
+  applyMapBg();
+}
+function addNovel(){
+  const name=prompt('新小說名稱：','新小說');
+  if(!name||!name.trim())return;
+  const n={id:uid2(),name:name.trim(),created:Date.now()};
+  novels.push(n);
+  save();
+  switchNovel(n.id);
+}
+function editNovel(id){
+  const n=novels.find(x=>x.id===id);if(!n)return;
+  const name=prompt('修改小說名稱：',n.name);
+  if(!name||!name.trim())return;
+  // Check if delete requested
+  n.name=name.trim();
+  save();renderNovelSwitcher();
+}
+function deleteNovel(id){
+  if(novels.length<=1){alert('至少需要保留一本小說');return;}
+  if(!confirm('確定刪除此小說？章節、關係、地圖等資料將一併刪除。'))return;
+  localStorage.removeItem('wf6-novel-'+id);
+  novels=novels.filter(n=>n.id!==id);
+  if(curNovelId===id)switchNovel(novels[0].id);
+  else{save();renderNovelSwitcher();}
+}
+
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+const _debouncedRenderChars=debounce(renderChars,250);
+const _debouncedRenderGrid=debounce(renderGrid,250);
 function showSaved(){
   const el=document.getElementById('save-time');if(!el)return;
   const n=new Date();
@@ -671,6 +796,7 @@ function renderAll(){
   renderChars();renderFav();renderGrid('item');renderGrid('faction');renderGrid('term');
   loadWorldForm();renderRelList();renderGraph();renderMapPins();
   renderTimeline();renderPlot();renderNovelCharsList();renderChapList();updateCounts();updateTotalWC();
+  renderNovelSwitcher();
 }
 
 /* COLOR PICKER */
@@ -856,6 +982,7 @@ function renderChars(){
         ${c.blood?`<span class="tag">${c.blood}型</span>`:''}
         ${c.birthday?`<span class="tag">🎂${c.birthday}</span>`:''}
         ${tagArr.map(t=>`<span class="tag b">${esc(t)}</span>`).join('')}
+        ${c.works?c.works.split(',').map(w=>w.trim()).filter(Boolean).map(w=>`<span class="tag" style="border-color:rgba(122,63,160,.3);color:#9a63c0;background:rgba(122,63,160,.06)">📖${esc(w)}</span>`).join(''):''}
       </div>
       ${c.personality?`<div class="cc-ex">${esc(c.personality)}</div>`:''}
       ${rels.length?`<div class="cc-rel-badge">🔗 <span>${rels.length}</span> 段關係</div>`:''}
@@ -1046,9 +1173,33 @@ function onNodeDrag(e){
 function stopNodeDrag(){if(_nd)_nd.style.cursor='grab';_nd=null;document.removeEventListener('mousemove',onNodeDrag);document.removeEventListener('mouseup',stopNodeDrag);}
 
 /* MAP */
-function loadMapBg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{S.mapBg=ev.target.result;save();applyMapBg();};r.readAsDataURL(f);}
-function applyMapBg(){const img=document.getElementById('map-bg-img');if(S.mapBg){img.src=S.mapBg;img.style.display='block';}else{img.style.display='none';}}
-function clearMapBg(){S.mapBg='';save();applyMapBg();}
+function loadMapBg(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const key='mapbg-'+(curNovelId||'default');
+    idbSet(key,ev.target.result).then(()=>{applyMapBg();}).catch(()=>{
+      // fallback: warn about size but don't store in S
+      alert('底圖儲存失敗，建議使用較小的圖片（< 1MB）');
+    });
+  };
+  r.readAsDataURL(f);
+}
+function applyMapBg(){
+  const img=document.getElementById('map-bg-img');if(!img)return;
+  const key='mapbg-'+(curNovelId||'default');
+  idbGet(key).then(data=>{
+    if(data){img.src=data;img.style.display='block';}
+    else{img.style.display='none';}
+  }).catch(()=>img.style.display='none');
+}
+function clearMapBg(){
+  const key='mapbg-'+(curNovelId||'default');
+  idbDel(key).then(()=>{
+    const img=document.getElementById('map-bg-img');
+    if(img){img.src='';img.style.display='none';}
+  });
+}
 function handleMapClick(e){
   if(e.target.closest('.mpin')||e.target.id==='map-bg-img'||e.target.closest('.pin-popup'))return;
   document.getElementById('pin-popup').style.display='none';
@@ -1203,7 +1354,8 @@ function selectChap(id){
 }
 function saveChapter(){if(!curChapId){alert('請先選擇或新增章節');return;}saveChapterContent();const btn=event.target;btn.textContent='✓ 已儲存';setTimeout(()=>btn.textContent='💾 儲存',1500);}
 function saveChapterContent(){if(!curChapId)return;const c=S.chapters.find(x=>x.id===curChapId);if(c){c.content=document.getElementById('prose-editor').value;save();}}
-function onProseInput(){updateChapWC();}
+const _autoSaveChap=debounce(()=>{if(curChapId)saveChapterContent();},1000);
+function onProseInput(){updateChapWC();_autoSaveChap();}
 function updateChapWC(){const wc=document.getElementById('prose-editor').value.replace(/\s/g,'').length;document.getElementById('cur-chap-wc').textContent=`本章 ${wc} 字`;updateTotalWC();}
 function updateTotalWC(){
   const curContent=document.getElementById('prose-editor').value;
