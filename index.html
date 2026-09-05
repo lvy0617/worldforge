@@ -530,7 +530,16 @@ hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
       </div>
       <input type="hidden" id="c-tags">
     </div>
-    <div class="field"><label>所屬作品 <span style="font-weight:400;color:var(--t3);font-size:.62rem">（可多個，逗號分隔）</span></label><input type="text" id="c-works" placeholder="留空 = 通用素材"><datalist id="c-works-list"></datalist></div>
+    <div class="field">
+      <label>所屬作品 <span style="font-weight:400;color:var(--t3);font-size:.62rem">（留空 = 通用素材）</span></label>
+      <div id="c-works-wrap" style="display:flex;flex-wrap:wrap;gap:.3rem;padding:.4rem .5rem;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);min-height:2.2rem;cursor:text;align-items:center" onclick="document.getElementById('c-works-input').focus()"></div>
+      <div style="display:flex;gap:.4rem;margin-top:.35rem">
+        <input type="text" id="c-works-input" placeholder="輸入作品名稱後按 Enter 或點＋" style="flex:1" list="c-works-list" onkeydown="addWorkFromInput(event)">
+        <button class="btn bg bs" onclick="addWorkFromInput(null)" type="button">＋</button>
+      </div>
+      <datalist id="c-works-list"></datalist>
+      <input type="hidden" id="c-works">
+    </div>
     <div class="field"><label>代表色</label><div class="color-opts" id="char-color-opts"></div></div>
     <div class="field"><label>備注</label><textarea id="c-notes" placeholder="其他細節…" style="min-height:55px"></textarea></div>
   </div>
@@ -910,6 +919,7 @@ function openCharModal(id){
   document.getElementById('char-del-btn').style.display=id?'':'none';
   document.getElementById('ctp-char-rels').innerHTML='';
   initTagsField('');
+  initWorksField('');
   charTab('basic',document.querySelector('#char-modal .mtab'));
   if(id){
     const c=S.chars.find(x=>x.id===id);
@@ -922,6 +932,7 @@ function openCharModal(id){
       (c.customFields||[]).forEach(f=>addCFRow(f.key,f.value,'cf-list'));
       if(c.color)selectColor('char-color-opts','c-color',c.color);
       initTagsField(c.tags||'');
+      initWorksField(c.works||'');
     }
   }
   openModal('char-modal');
@@ -1009,6 +1020,41 @@ function initTagsField(tagsStr){
   document.getElementById('c-tags').value=tagsStr||'';
   document.getElementById('c-tags-input').value='';
   renderTagChips();
+}
+
+/* WORKS CHIP UI */
+function getWorksArr(){
+  return (document.getElementById('c-works').value||'').split(',').map(t=>t.trim()).filter(Boolean);
+}
+function setWorksArr(arr){
+  document.getElementById('c-works').value=arr.join(',');
+  renderWorkChips();
+}
+function renderWorkChips(){
+  const wrap=document.getElementById('c-works-wrap');if(!wrap)return;
+  const arr=getWorksArr();
+  wrap.innerHTML=arr.map((t,i)=>`<span class="tag-chip" style="background:rgba(122,63,160,.1);border-color:rgba(122,63,160,.3);color:#9a63c0">${esc(t)}<button type="button" onclick="removeWork(${i})">✕</button></span>`).join('');
+  // update datalist
+  const dl=document.getElementById('c-works-list');
+  if(dl)dl.innerHTML=novels.map(n=>`<option value="${esc(n.name)}">`).join('');
+}
+function addWorkFromInput(e){
+  if(e&&e.type==='keydown'&&e.key!=='Enter')return;
+  if(e&&e.type==='keydown')e.preventDefault();
+  const input=document.getElementById('c-works-input');
+  const val=input.value.trim();
+  if(!val)return;
+  const arr=getWorksArr();
+  if(!arr.includes(val)){arr.push(val);setWorksArr(arr);}
+  input.value='';
+}
+function removeWork(idx){
+  const arr=getWorksArr();arr.splice(idx,1);setWorksArr(arr);
+}
+function initWorksField(worksStr){
+  document.getElementById('c-works').value=worksStr||'';
+  document.getElementById('c-works-input').value='';
+  renderWorkChips();
 }
 
 function renderChars(){
