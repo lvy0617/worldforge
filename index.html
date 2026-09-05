@@ -245,6 +245,9 @@ textarea{resize:vertical;min-height:70px;line-height:1.7}
 hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
 .ntc{display:none}.ntc.active{display:block}
 .rel-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.3rem;vertical-align:middle}
+.tag-chip{display:inline-flex;align-items:center;gap:.25rem;background:rgba(42,90,138,.12);border:1px solid rgba(42,90,138,.3);color:var(--blue);border-radius:20px;font-size:.68rem;padding:.1rem .5rem .1rem .6rem;user-select:none}
+.tag-chip button{background:none;border:none;color:inherit;cursor:pointer;font-size:.75rem;line-height:1;padding:0;opacity:.6}
+.tag-chip button:hover{opacity:1}
 .novel-tab{display:flex;align-items:center;gap:.35rem;padding:.32rem .55rem;border-radius:var(--r);cursor:pointer;font-size:.78rem;color:var(--t2);transition:all .15s;user-select:none;border:1px solid transparent}
 .novel-tab:hover{background:var(--bghov);color:var(--t1)}
 .novel-tab.active{background:var(--bg3);color:var(--gold);border-color:var(--bdrm)}
@@ -518,7 +521,15 @@ hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
     <div class="g5"><div class="field"><label>年齡</label><input type="text" id="c-age" placeholder="歲"></div><div class="field"><label>性別</label><select id="c-gender"><option value="">──</option><option>男</option><option>女</option><option>不明</option><option>其他</option></select></div><div class="field"><label>身高</label><input type="text" id="c-height" placeholder="cm"></div><div class="field"><label>體重</label><input type="text" id="c-weight" placeholder="kg"></div><div class="field"><label>血型</label><select id="c-blood"><option value="">──</option><option>A</option><option>B</option><option>AB</option><option>O</option><option>不明</option></select></div></div>
     <div class="g3"><div class="field"><label>生日</label><input type="text" id="c-birthday" placeholder="例：3月15日"></div><div class="field"><label>陣營</label><select id="c-align"><option value="">──</option><option>正派</option><option>反派</option><option>中立</option><option>灰色地帶</option><option>其他</option></select></div><div class="field"><label>重要程度</label><select id="c-role-level"><option value="">──</option><option>主角</option><option>重要配角</option><option>配角</option><option>龍套</option></select></div></div>
     <div class="g2"><div class="field"><label>職業 / 身份</label><input type="text" id="c-role" placeholder="騎士、魔法師…"></div><div class="field"><label>所屬勢力</label><input type="text" id="c-faction" placeholder="組織、國家"></div></div>
-    <div class="field"><label>標籤 <span style="font-weight:400;color:var(--t3);font-size:.62rem">（逗號分隔，可篩選）</span></label><input type="text" id="c-tags" placeholder="主角, 魔法使用者…"></div>
+    <div class="field">
+      <label>標籤 <span style="font-weight:400;color:var(--t3);font-size:.62rem">（可篩選角色）</span></label>
+      <div id="c-tags-wrap" style="display:flex;flex-wrap:wrap;gap:.3rem;padding:.4rem .5rem;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);min-height:2.2rem;cursor:text;align-items:center" onclick="document.getElementById('c-tags-input').focus()"></div>
+      <div style="display:flex;gap:.4rem;margin-top:.35rem">
+        <input type="text" id="c-tags-input" placeholder="輸入標籤後按 Enter 或點＋" style="flex:1" onkeydown="addTagFromInput(event)">
+        <button class="btn bg bs" onclick="addTagFromInput(null)" type="button">＋</button>
+      </div>
+      <input type="hidden" id="c-tags">
+    </div>
     <div class="field"><label>所屬作品 <span style="font-weight:400;color:var(--t3);font-size:.62rem">（可多個，逗號分隔）</span></label><input type="text" id="c-works" placeholder="留空 = 通用素材"><datalist id="c-works-list"></datalist></div>
     <div class="field"><label>代表色</label><div class="color-opts" id="char-color-opts"></div></div>
     <div class="field"><label>備注</label><textarea id="c-notes" placeholder="其他細節…" style="min-height:55px"></textarea></div>
@@ -898,6 +909,7 @@ function openCharModal(id){
   document.getElementById('char-modal-title').textContent=id?'編輯角色':'新增角色';
   document.getElementById('char-del-btn').style.display=id?'':'none';
   document.getElementById('ctp-char-rels').innerHTML='';
+  initTagsField('');
   charTab('basic',document.querySelector('#char-modal .mtab'));
   if(id){
     const c=S.chars.find(x=>x.id===id);
@@ -909,6 +921,7 @@ function openCharModal(id){
       document.getElementById('c-role-level').value=c.roleLevel||'';
       (c.customFields||[]).forEach(f=>addCFRow(f.key,f.value,'cf-list'));
       if(c.color)selectColor('char-color-opts','c-color',c.color);
+      initTagsField(c.tags||'');
     }
   }
   openModal('char-modal');
@@ -966,6 +979,38 @@ function setCharTagFilter(t){
   else charTagFilter.add(t);
   renderCharTagFilter();renderChars();
 }
+/* TAG CHIP UI */
+function getTagsArr(){
+  return (document.getElementById('c-tags').value||'').split(',').map(t=>t.trim()).filter(Boolean);
+}
+function setTagsArr(arr){
+  document.getElementById('c-tags').value=arr.join(',');
+  renderTagChips();
+}
+function renderTagChips(){
+  const wrap=document.getElementById('c-tags-wrap');if(!wrap)return;
+  const arr=getTagsArr();
+  wrap.innerHTML=arr.map((t,i)=>`<span class="tag-chip">${esc(t)}<button type="button" onclick="removeTag(${i})">✕</button></span>`).join('');
+}
+function addTagFromInput(e){
+  if(e&&e.type==='keydown'&&e.key!=='Enter')return;
+  if(e&&e.type==='keydown')e.preventDefault();
+  const input=document.getElementById('c-tags-input');
+  const val=input.value.trim();
+  if(!val)return;
+  const arr=getTagsArr();
+  if(!arr.includes(val)){arr.push(val);setTagsArr(arr);}
+  input.value='';
+}
+function removeTag(idx){
+  const arr=getTagsArr();arr.splice(idx,1);setTagsArr(arr);
+}
+function initTagsField(tagsStr){
+  document.getElementById('c-tags').value=tagsStr||'';
+  document.getElementById('c-tags-input').value='';
+  renderTagChips();
+}
+
 function renderChars(){
   const grid=document.getElementById('char-grid');
   const q=(document.getElementById('char-search')||{}).value||'';
