@@ -640,7 +640,7 @@ const TL_COLORS={歷史:'#c8963c',戰爭:'#a03030',政治:'#2a5a8a',個人:'#2e7
 const DH='<svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" style="color:var(--t3);display:block;pointer-events:none"><circle cx="3" cy="4" r="1.4"/><circle cx="9" cy="4" r="1.4"/><circle cx="3" cy="8" r="1.4"/><circle cx="9" cy="8" r="1.4"/><circle cx="3" cy="12" r="1.4"/><circle cx="9" cy="12" r="1.4"/></svg>';
 const DEF=()=>({chars:[],items:[],factions:[],terms:[],world:{},relations:[],mapPins:[],timeline:[],plot:[],novelChars:[],chapters:[],nodePos:{}});
 const NOVELS_DEF=()=>[];
-let S=DEF(),fsPx=15,curChapId=null,tlFilter='全部',charTagFilter='';
+let S=DEF(),fsPx=15,curChapId=null,tlFilter='全部',charTagFilter=new Set();
 let novels=[],curNovelId=null;
 
 /* I18N */
@@ -957,16 +957,22 @@ function renderCharTagFilter(){
   });
   const f=document.getElementById('char-tag-filter');
   if(!allTags.size){f.innerHTML='';return;}
-  f.innerHTML=[...allTags].map(t=>`<div class="tfc${charTagFilter===t?' on':''}" onclick="setCharTagFilter('${ea(t)}')">${esc(t)}</div>`).join('');
+  const hasFilter=charTagFilter.size>0;
+  f.innerHTML=(hasFilter?`<div class="tfc on" onclick="charTagFilter.clear();renderCharTagFilter();renderChars()">✕ 清除篩選</div>`:'')
+    +[...allTags].map(t=>`<div class="tfc${charTagFilter.has(t)?' on':''}" onclick="setCharTagFilter('${ea(t)}')">${esc(t)}</div>`).join('');
 }
-function setCharTagFilter(t){charTagFilter=charTagFilter===t?'':t;renderCharTagFilter();renderChars();}
+function setCharTagFilter(t){
+  if(charTagFilter.has(t))charTagFilter.delete(t);
+  else charTagFilter.add(t);
+  renderCharTagFilter();renderChars();
+}
 function renderChars(){
   const grid=document.getElementById('char-grid');
   const q=(document.getElementById('char-search')||{}).value||'';
   let arr=S.chars;
   if(q){const lq=q.toLowerCase();arr=arr.filter(c=>[c.name,c.alias,c.role,c.faction,c.personality,c.tags,c.roleLevel].some(v=>v&&v.toLowerCase().includes(lq)));}
-  if(charTagFilter){arr=arr.filter(c=>{const tags=(c.tags||'').split(',').map(t=>t.trim());return tags.includes(charTagFilter)||c.roleLevel===charTagFilter;});}
-  if(!arr.length){grid.innerHTML=q||charTagFilter?'<div class="empty">無符合結果</div>':'<div class="empty">尚無角色<br>點擊右上角開始建立</div>';return;}
+  if(charTagFilter.size>0){arr=arr.filter(c=>{const tags=(c.tags||'').split(',').map(t=>t.trim());return[...charTagFilter].every(f=>tags.includes(f)||c.roleLevel===f);});}
+  if(!arr.length){grid.innerHTML=q||charTagFilter.size>0?'<div class="empty">無符合結果</div>':'<div class="empty">尚無角色<br>點擊右上角開始建立</div>';return;}
   grid.innerHTML=arr.map(c=>{
     const rels=S.relations.filter(r=>r.a===c.id||r.b===c.id);
     const tagArr=(c.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
@@ -988,7 +994,7 @@ function renderChars(){
       ${rels.length?`<div class="cc-rel-badge">🔗 <span>${rels.length}</span> 段關係</div>`:''}
     </div>`;
   }).join('');
-  if(!q&&!charTagFilter)makeSortGrid('char-grid',order=>{S.chars=order.map(id=>S.chars.find(c=>c.id===id)).filter(Boolean);save();});
+  if(!q&&charTagFilter.size===0)makeSortGrid('char-grid',order=>{S.chars=order.map(id=>S.chars.find(c=>c.id===id)).filter(Boolean);save();});
   renderCharTagFilter();
 }
 function renderFav(){
