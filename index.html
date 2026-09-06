@@ -152,10 +152,23 @@ textarea{resize:vertical;min-height:70px;line-height:1.7}
 .cfr{display:flex;gap:.45rem;align-items:center;margin-bottom:.35rem;border-radius:var(--r);padding:2px;transition:background .12s}
 .cfr.is-drag{opacity:.3;background:var(--bghov)}.cfr.drag-above{box-shadow:0 -2px 0 var(--gold)}
 .cfr input{flex:1}.cfk{max-width:115px}
-.lore-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.9rem}
-.lore-blk{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
-.lore-hdr{padding:.42rem .7rem;background:var(--bg2);border-bottom:1px solid var(--bdr);font-size:.72rem;font-weight:500;color:var(--golddim);display:flex;align-items:center;gap:.35rem}
-.lore-blk textarea{border:none;border-radius:0;background:transparent;padding:.65rem .7rem;min-height:88px}
+.world-tabs{display:flex;gap:0;border-bottom:1px solid var(--bdr);margin-bottom:1rem;overflow-x:auto;flex-shrink:0}
+.world-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--t3);font-size:.8rem;padding:.4rem .9rem;cursor:pointer;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:.35rem}
+.world-tab:hover{color:var(--t2)}.world-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.world-tab-add{background:none;border:none;color:var(--t3);font-size:.82rem;padding:.4rem .6rem;cursor:pointer;transition:color .15s}
+.world-tab-add:hover{color:var(--gold)}
+.world-section{display:none}.world-section.active{display:flex;flex-direction:column;gap:.75rem}
+.world-block{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.world-block-hdr{display:flex;align-items:center;gap:.45rem;padding:.42rem .55rem .42rem .7rem;background:var(--bg2);border-bottom:1px solid var(--bdr)}
+.world-block-icon{font-size:.9rem;cursor:pointer;opacity:.7;transition:opacity .15s}
+.world-block-icon:hover{opacity:1}
+.world-block-title{flex:1;background:none;border:none;color:var(--golddim);font-size:.78rem;font-weight:500;outline:none;font-family:inherit;padding:0}
+.world-block-title:focus{color:var(--gold)}
+.world-block-title::placeholder{color:var(--t3)}
+.world-block textarea{border:none;border-radius:0;background:transparent;padding:.7rem;min-height:120px;width:100%;color:var(--t1);font-family:inherit;font-size:.85rem;line-height:1.7;resize:vertical;outline:none}
+.world-block-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:.82rem;padding:.2rem .35rem;border-radius:var(--r);transition:all .15s;opacity:.5}
+.world-block-del:hover{color:var(--red);opacity:1;background:rgba(160,48,48,.1)}
+.world-meta{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:.85rem}
 #rel-canvas{width:100%;height:420px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);position:relative;overflow:hidden;margin-bottom:.9rem}
 #rel-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
 .rnode{position:absolute;transform:translate(-50%,-50%);background:var(--bg2);border:2px solid var(--node-color,var(--gold));border-radius:50%;width:62px;height:62px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Noto Serif TC',serif;font-size:.65rem;font-weight:700;color:var(--t1);cursor:grab;user-select:none;z-index:2;line-height:1.3;padding:4px;box-shadow:var(--shs);transition:box-shadow .18s}
@@ -354,19 +367,29 @@ hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
       <div class="cgrid" id="fav-grid"><div class="empty">尚無收藏角色</div></div>
     </div>
     <div id="lib-worldview" class="lib-view" style="display:none">
-      <div class="sh"><h1 data-i18n="world_settings">世界設定</h1><button class="btn bp" onclick="saveWorld()">💾 儲存</button></div>
-      <div class="card" style="margin-bottom:.75rem">
-        <div class="g2"><div class="field"><label data-i18n="world_name">世界名稱</label><input type="text" id="w-name" placeholder="例：黎明大陸"></div><div class="field"><label data-i18n="world_type">世界類型</label><select id="w-type"><option>奇幻</option><option>科幻</option><option>現代</option><option>古代</option><option>末世</option><option>架空歷史</option><option>其他</option></select></div></div>
-        <div class="field"><label data-i18n="world_desc">整體描述</label><textarea id="w-desc" placeholder="這個世界的整體樣貌…"></textarea></div>
+      <div class="sh">
+        <h1 data-i18n="world_settings">世界設定</h1>
+        <div class="row">
+          <button class="btn bg bs" onclick="addWorldBlock()">＋ 新增區塊</button>
+          <button class="btn bp" onclick="saveWorld()">💾 儲存</button>
+        </div>
       </div>
-      <div class="lore-grid">
-        <div class="lore-blk"><div class="lore-hdr">⚔️ 歷史與紀年</div><textarea id="w-history" placeholder="重要歷史事件…"></textarea></div>
-        <div class="lore-blk"><div class="lore-hdr">✨ 魔法 / 科技規則</div><textarea id="w-magic" placeholder="超自然力量的運作…"></textarea></div>
-        <div class="lore-blk"><div class="lore-hdr">🏛️ 勢力與政治</div><textarea id="w-factions" placeholder="國家、組織、派系…"></textarea></div>
-        <div class="lore-blk"><div class="lore-hdr">🌿 地理與環境</div><textarea id="w-geo" placeholder="重要地點、地形…"></textarea></div>
-        <div class="lore-blk"><div class="lore-hdr">👥 種族與文化</div><textarea id="w-races" placeholder="種族、信仰、風俗…"></textarea></div>
-        <div class="lore-blk"><div class="lore-hdr">📜 其他設定</div><textarea id="w-misc" placeholder="任何其他細節…"></textarea></div>
+      <!-- Basic info -->
+      <div class="world-meta" style="margin-bottom:.85rem">
+        <div class="g2" style="margin-bottom:.65rem">
+          <div class="field"><label data-i18n="world_name">世界名稱</label><input type="text" id="w-name" placeholder="例：黎明大陸" oninput="debounce(saveWorld,800)()"></div>
+          <div class="field"><label data-i18n="world_type">世界類型</label>
+            <select id="w-type" onchange="saveWorld()"><option>奇幻</option><option>科幻</option><option>現代</option><option>古代</option><option>末世</option><option>架空歷史</option><option>其他</option></select>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0"><label data-i18n="world_desc">整體描述</label><textarea id="w-desc" placeholder="這個世界的整體樣貌…" oninput="debounce(saveWorld,800)()"></textarea></div>
       </div>
+      <!-- Tabs + blocks -->
+      <div style="display:flex;align-items:center;border-bottom:1px solid var(--bdr);margin-bottom:.9rem">
+        <div class="world-tabs" id="world-tabs" style="border-bottom:none;flex:1"></div>
+        <button class="world-tab-add" onclick="addWorldCat()" title="新增分類">＋ 分類</button>
+      </div>
+      <div id="world-blocks"></div>
       <div id="world-saved" style="display:none;text-align:center;margin-top:.9rem;color:var(--teal);font-size:.78rem">✓ 已儲存</div>
     </div>
     <div id="lib-items" class="lib-view" style="display:none">
@@ -723,8 +746,7 @@ function idbDel(key){return openIDB().then(db=>new Promise((res,rej)=>{const tx=
   buildColorOpts('char-color-opts','c-color',CHAR_COLORS);
   buildColorOpts('pin-color-opts','mp-color',['#c8963c','#2e7d6e','#a03030','#2a5a8a','#7a3fa0','']);
   renderAll();
-  document.querySelectorAll('#lib-worldview input,#lib-worldview textarea,#lib-worldview select')
-    .forEach(el=>el.addEventListener('input',debounce(saveWorld,800)));
+  // world auto-save handled inline per element
   document.getElementById('rel-canvas').addEventListener('mouseover',onNodeHover);
   document.getElementById('rel-canvas').addEventListener('mouseout',onNodeOut);
   setInterval(()=>{if(curChapId)saveChapterContent();},60000);
@@ -1138,14 +1160,166 @@ function renderGrid(type){
 }
 
 /* WORLD */
+/* ── WORLD SETTINGS ── */
+const WORLD_CAT_ICONS=['📖','⚔️','✨','🏛️','🌿','👥','🗺️','📜','💡','🔮','⚡','🌊'];
+let curWorldCat=0;
+
+function worldDefaultCats(){
+  return [
+    {id:uid2(),name:'基礎設定',blocks:[
+      {id:uid2(),icon:'📖',title:'歷史與紀年',content:''},
+      {id:uid2(),icon:'✨',title:'魔法 / 科技規則',content:''},
+    ]},
+    {id:uid2(),name:'世界結構',blocks:[
+      {id:uid2(),icon:'🏛️',title:'勢力與政治',content:''},
+      {id:uid2(),icon:'🌿',title:'地理與環境',content:''},
+      {id:uid2(),icon:'👥',title:'種族與文化',content:''},
+    ]},
+    {id:uid2(),name:'其他',blocks:[
+      {id:uid2(),icon:'📜',title:'其他設定',content:''},
+    ]},
+  ];
+}
+
 function loadWorldForm(){
   const w=S.world;
-  document.getElementById('w-name').value=w.name||'';document.getElementById('w-type').value=w.type||'奇幻';document.getElementById('w-desc').value=w.desc||'';
-  ['history','magic','factions','geo','races','misc'].forEach(k=>document.getElementById('w-'+k).value=w[k]||'');
+  const nameEl=document.getElementById('w-name');
+  const typeEl=document.getElementById('w-type');
+  const descEl=document.getElementById('w-desc');
+  if(nameEl)nameEl.value=w.name||'';
+  if(typeEl)typeEl.value=w.type||'奇幻';
+  if(descEl)descEl.value=w.desc||'';
+  // init categories if not present
+  if(!w.cats||!w.cats.length)w.cats=worldDefaultCats();
+  if(curWorldCat>=w.cats.length)curWorldCat=0;
+  renderWorldTabs();
+  renderWorldBlocks();
 }
+
 function saveWorld(){
-  S.world={name:gv('w-name'),type:gv('w-type'),desc:gv('w-desc'),history:gv('w-history'),magic:gv('w-magic'),factions:gv('w-factions'),geo:gv('w-geo'),races:gv('w-races'),misc:gv('w-misc')};
-  save();const msg=document.getElementById('world-saved');msg.style.display='block';setTimeout(()=>msg.style.display='none',1800);
+  if(!S.world.cats)S.world.cats=worldDefaultCats();
+  S.world.name=gv('w-name');
+  S.world.type=gv('w-type');
+  S.world.desc=gv('w-desc');
+  // sync block content from DOM
+  const cats=S.world.cats;
+  cats.forEach(cat=>{
+    cat.blocks.forEach(blk=>{
+      const el=document.getElementById('wb-'+blk.id);
+      if(el)blk.content=el.value;
+      const tel=document.getElementById('wbt-'+blk.id);
+      if(tel)blk.title=tel.value;
+    });
+    const cel=document.getElementById('wcat-'+cat.id);
+    if(cel)cat.name=cel.value;
+  });
+  save();
+  const msg=document.getElementById('world-saved');
+  if(msg){msg.style.display='block';setTimeout(()=>msg.style.display='none',1800);}
+}
+
+function renderWorldTabs(){
+  const tabs=document.getElementById('world-tabs');if(!tabs)return;
+  const cats=S.world.cats||[];
+  tabs.innerHTML=cats.map((cat,i)=>`
+    <button class="world-tab${i===curWorldCat?' active':''}" onclick="switchWorldCat(${i})">
+      ${esc(cat.name||'分類'+(i+1))}
+    </button>`).join('');
+}
+
+function renderWorldBlocks(){
+  const wrap=document.getElementById('world-blocks');if(!wrap)return;
+  const cats=S.world.cats||[];
+  const cat=cats[curWorldCat];
+  if(!cat){wrap.innerHTML='<div class="empty">尚無分類</div>';return;}
+  wrap.innerHTML=`
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+      <label style="font-size:.68rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">分類名稱</label>
+      <input type="text" id="wcat-${cat.id}" value="${esc(cat.name)}" placeholder="分類名稱" style="flex:1;max-width:200px" oninput="debounce(saveWorld,600)()">
+      <button class="btn bg bs" onclick="addWorldBlock()">＋ 新增區塊</button>
+      ${cats.length>1?`<button class="btn bd bs" onclick="deleteWorldCat(${curWorldCat})">刪除分類</button>`:''}
+    </div>
+    <div id="world-block-list" style="display:flex;flex-direction:column;gap:.65rem">
+      ${cat.blocks.map((blk,bi)=>renderWorldBlockHTML(blk,bi)).join('')}
+    </div>`;
+  // attach drag sort
+  const list=document.getElementById('world-block-list');
+  if(list)makeSortList(list,order=>{
+    const cat=S.world.cats[curWorldCat];
+    cat.blocks=order.map(id=>cat.blocks.find(b=>b.id===id)).filter(Boolean);
+    saveWorld();renderWorldBlocks();
+  });
+}
+
+function renderWorldBlockHTML(blk,bi){
+  return `<div class="world-block" draggable="true" data-sid="${blk.id}">
+    <div class="world-block-hdr">
+      <span class="dh" style="cursor:grab;color:var(--t3)">${'<svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" style="color:var(--t3);display:block;pointer-events:none"><circle cx="3" cy="4" r="1.4"/><circle cx="9" cy="4" r="1.4"/><circle cx="3" cy="8" r="1.4"/><circle cx="9" cy="8" r="1.4"/><circle cx="3" cy="12" r="1.4"/><circle cx="9" cy="12" r="1.4"/></svg>'}</span>
+      <span class="world-block-icon" onclick="cycleBlockIcon('${blk.id}')" title="點擊換圖示">${blk.icon||'📄'}</span>
+      <input class="world-block-title" id="wbt-${blk.id}" value="${esc(blk.title)}" placeholder="區塊標題" oninput="debounce(saveWorld,600)()">
+      <button class="world-block-del" onclick="deleteWorldBlock('${blk.id}')" title="刪除">✕</button>
+    </div>
+    <textarea id="wb-${blk.id}" placeholder="在這裡輸入內容…" oninput="debounce(saveWorld,600)()">${esc(blk.content||'')}</textarea>
+  </div>`;
+}
+
+function switchWorldCat(i){
+  saveWorld();
+  curWorldCat=i;
+  renderWorldTabs();
+  renderWorldBlocks();
+}
+
+function addWorldCat(){
+  saveWorld();
+  if(!S.world.cats)S.world.cats=worldDefaultCats();
+  const name=prompt('新分類名稱：','新分類');
+  if(!name||!name.trim())return;
+  S.world.cats.push({id:uid2(),name:name.trim(),blocks:[]});
+  curWorldCat=S.world.cats.length-1;
+  saveWorld();renderWorldTabs();renderWorldBlocks();
+}
+
+function addWorldBlock(){
+  saveWorld();
+  if(!S.world.cats||!S.world.cats.length){S.world.cats=worldDefaultCats();}
+  const cat=S.world.cats[curWorldCat];
+  if(!cat)return;
+  cat.blocks.push({id:uid2(),icon:'📄',title:'新區塊',content:''});
+  saveWorld();renderWorldBlocks();
+  // focus the new title
+  setTimeout(()=>{
+    const last=cat.blocks[cat.blocks.length-1];
+    const el=document.getElementById('wbt-'+last.id);
+    if(el){el.focus();el.select();}
+  },50);
+}
+
+function deleteWorldBlock(id){
+  if(!confirm('確定刪除此區塊？內容將一併刪除。'))return;
+  saveWorld();
+  const cat=S.world.cats[curWorldCat];
+  if(!cat)return;
+  cat.blocks=cat.blocks.filter(b=>b.id!==id);
+  saveWorld();renderWorldBlocks();
+}
+
+function deleteWorldCat(i){
+  if(!confirm('確定刪除此分類？所有區塊將一併刪除。'))return;
+  saveWorld();
+  S.world.cats.splice(i,1);
+  curWorldCat=Math.min(curWorldCat,S.world.cats.length-1);
+  saveWorld();renderWorldTabs();renderWorldBlocks();
+}
+
+function cycleBlockIcon(id){
+  const cat=S.world.cats[curWorldCat];if(!cat)return;
+  const blk=cat.blocks.find(b=>b.id===id);if(!blk)return;
+  const idx=WORLD_CAT_ICONS.indexOf(blk.icon);
+  blk.icon=WORLD_CAT_ICONS[(idx+1)%WORLD_CAT_ICONS.length];
+  saveWorld();
+  const el=document.querySelector('.world-block-icon[onclick*="'+id+'"]');
+  if(el)el.textContent=blk.icon;
 }
 
 /* NOVEL CHARS */
