@@ -3,1092 +3,1979 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>手作定價帳本</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<title>比價小幫手</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <style>
-  :root{
-    --paper:#EDEAE0;
-    --card:#FFFFFF;
-    --line:#D8D2C2;
-    --ink:#2B2A25;
-    --ink-soft:#6B6656;
-    --moss:#4B6B53;
-    --moss-soft:#E4EBE3;
-    --rust:#8C3F2A;
-    --rust-soft:#F3E4DE;
+  :root {
+    --bg: #f0eee3;
+    --panel: #f7f4ea;
+    --card: #ffffff;
+    --ink: #232921;
+    --sub: #706e60;
+    --accent: #2f6e52;
+    --accent-dark: #204f3c;
+    --accent-light: #dceae1;
+    --line: #e2ddcd;
+    --good: #3f8f5c;
+    --bad: #b0483a;
+    --gold: #a9791e;
+    --gold-light: #f1e4c2;
+    --shadow: 0 1px 2px rgba(35,40,30,0.05), 0 4px 14px rgba(35,40,30,0.06);
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:var(--paper);
-    color:var(--ink);
-    font-family:'Noto Sans TC',sans-serif;
-    line-height:1.6;
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 20px;
   }
-  h1,h2,h3{
-    font-family:'Noto Serif TC',serif;
-    font-weight:700;
-    margin:0;
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 4px; font-weight: 700; letter-spacing: -0.01em; }
+  .sub { color: var(--sub); font-size: 14px; margin-bottom: 20px; }
+
+  .material-icons { font-family: 'Material Icons'; font-weight: normal; font-style: normal; line-height: 1; }
+  .item-icon { font-size: 20px; color: var(--accent); vertical-align: -4px; margin-right: 4px; }
+
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 10px 0;
+    font-size: 15px;
+    color: var(--sub);
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    transition: color 0.15s, border-color 0.15s;
   }
-  .wrap{max-width:720px;margin:0 auto;padding:28px 18px 80px;}
-  header.top{margin-bottom:22px;}
-  header.top h1{font-size:26px;letter-spacing:.5px;}
-  header.top p{color:var(--ink-soft);font-size:14px;margin-top:6px;}
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
-  nav.tabs{display:flex;border-bottom:2px solid var(--ink);margin-bottom:22px;}
-  nav.tabs button{
-    flex:1;background:none;border:none;padding:12px 8px;
-    font-family:'Noto Serif TC',serif;font-size:16px;font-weight:700;
-    color:var(--ink-soft);cursor:pointer;position:relative;top:2px;
+  .stats-range-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .stat-label { font-size: 12px; color: var(--sub); margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+
+  .stats-section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  .stats-section-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--ink); }
+
+  .cat-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; }
+  .cat-bar-label { flex: 0 0 70px; color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-bar-track { flex: 1; height: 8px; background: var(--bg); border-radius: 999px; overflow: hidden; }
+  .cat-bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+  .cat-bar-amount { flex: 0 0 66px; text-align: right; font-weight: 600; }
+
+  .stats-list-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .stats-list-row:last-child { border-bottom: none; }
+  .stats-list-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stats-list-count { color: var(--sub); font-size: 13px; white-space: nowrap; }
+
+  .promo-badge {
+    font-size: 11px;
+    background: var(--gold);
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-left: 4px;
+    white-space: nowrap;
+    cursor: help;
+    font-weight: 500;
   }
-  nav.tabs button.active{color:var(--ink);border-bottom:2px solid var(--ink);}
 
-  section{display:none;}
-  section.active{display:block;}
-
-  .row-item{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-left:4px solid var(--moss);
-    padding:14px 16px;
-    margin-bottom:10px;
-    border-radius:4px;
+  .add-item-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    align-items: center;
   }
-  .row-item.rust{border-left-color:var(--rust);}
-  .row-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;cursor:pointer;}
-  .row-head .title{font-weight:700;font-size:16px;}
-  .row-head .sub{font-size:13px;color:var(--ink-soft);margin-top:2px;}
-  .row-nums{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
-  .row-nums .price{font-size:17px;font-weight:700;}
-  .row-nums .margin{font-size:12px;color:var(--ink-soft);}
-  .margin.good{color:var(--moss);}
-  .margin.bad{color:var(--rust);}
-
-  .details{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;display:none;}
-  .details.open{display:block;}
-  .details table{width:100%;border-collapse:collapse;}
-  .details td{padding:3px 0;}
-  .details td:last-child{text-align:right;font-variant-numeric:tabular-nums;}
-  .details img{max-width:100%;border-radius:4px;margin-bottom:8px;display:block;}
-  .details .reason{color:var(--ink-soft);margin-top:4px;}
-  .details .actions{margin-top:10px;display:flex;gap:8px;}
-
-  button.link{background:none;border:none;color:var(--ink-soft);font-size:12px;cursor:pointer;text-decoration:underline;padding:0;}
-  button.link.danger{color:var(--rust);}
-
-  .add-btn{
-    width:100%;padding:12px;background:none;border:1px dashed var(--line);
-    border-radius:4px;color:var(--ink-soft);font-size:14px;cursor:pointer;margin-top:6px;
+  input, select {
+    font-size: 15px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
   }
-  .add-btn:hover{border-color:var(--ink-soft);color:var(--ink);}
-
-  form.editor{
-    background:var(--card);border:1px solid var(--line);border-radius:4px;
-    padding:16px;margin-top:10px;margin-bottom:10px;
+  input:focus, select:focus { border-color: var(--accent); }
+  .add-item-row input { flex: 1; min-width: 160px; }
+  .add-item-row select { flex: 0 0 120px; }
+  button {
+    font-size: 15px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: 500;
+    transition: background 0.15s, opacity 0.15s;
   }
-  form.editor label{display:block;font-size:12px;color:var(--ink-soft);margin:10px 0 4px;}
-  form.editor label:first-child{margin-top:0;}
-  form.editor input[type=text], form.editor input[type=number], form.editor textarea, form.editor select{
-    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;
-    font-family:inherit;font-size:14px;background:#fff;color:var(--ink);
+  button:hover { background: var(--accent-dark); }
+  button.ghost {
+    background: transparent;
+    color: var(--sub);
+    border: 1px solid var(--line);
+    font-weight: 400;
   }
-  form.editor textarea{resize:vertical;min-height:50px;}
-  .cost-item{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
-  .cost-item input[type=text]{flex:2;}
-  .cost-item input[type=number]{flex:1;}
-  .cost-item button{background:none;border:none;color:var(--rust);cursor:pointer;font-size:16px;padding:4px 8px;}
-  .form-actions{display:flex;gap:10px;margin-top:16px;}
-  .btn{
-    padding:9px 18px;border-radius:4px;font-size:14px;cursor:pointer;font-family:inherit;
-    border:1px solid var(--ink);
+  button.ghost:hover { background: var(--panel); }
+  button.small { padding: 6px 10px; font-size: 13px; }
+
+  .icon-picker-wrap { position: relative; flex: 0 0 auto; }
+  .icon-picker-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
   }
-  .btn-primary{background:var(--ink);color:#fff;}
-  .btn-secondary{background:none;color:var(--ink-soft);border-color:var(--line);}
-  .btn-danger{background:none;color:var(--rust);border-color:var(--rust);}
-  .err{color:var(--rust);font-size:12px;margin-top:6px;}
-
-  .type-toggle{display:flex;gap:8px;}
-  .type-toggle button{
-    flex:1;padding:8px;border-radius:4px;border:1px solid var(--line);background:#fff;
-    color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:13px;
+  .icon-picker-btn .material-icons { font-size: 22px; color: var(--accent); margin: 0; }
+  .icon-picker-panel {
+    display: none;
+    position: absolute;
+    top: 50px;
+    left: 0;
+    z-index: 30;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    width: 260px;
+    box-shadow: var(--shadow);
   }
-  .type-toggle button.sel-moss{background:var(--moss-soft);border-color:var(--moss);color:var(--moss);font-weight:700;}
-  .type-toggle button.sel-rust{background:var(--rust-soft);border-color:var(--rust);color:var(--rust);font-weight:700;}
-
-  .scenario{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);}
-  .scenario-title{font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;}
-  .badge{font-size:11px;background:var(--moss-soft);color:var(--moss);padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:middle;font-weight:500;}
-  .empty{color:var(--ink-soft);font-size:14px;text-align:center;padding:24px 0;}
-  .stat-bar{display:flex;gap:10px;margin-bottom:16px;}
-  .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:10px 12px;}
-  .stat .label{font-size:12px;color:var(--ink-soft);}
-  .stat .val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;}
-
-  .util-bar{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;}
-  .util-bar button.link{font-size:12px;}
-
-  .controls-bar{display:flex;gap:8px;margin-bottom:12px;}
-  .controls-bar select{
-    flex:1;padding:7px 8px;border:1px solid var(--line);border-radius:4px;
-    font-family:inherit;font-size:13px;background:#fff;color:var(--ink);
+  .icon-opt-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid transparent;
+    border-radius: 8px;
   }
-  .controls-bar label.chk{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+  .icon-opt-btn .material-icons { font-size: 20px; }
+  .icon-opt-btn:hover { background: var(--accent-light); }
+  .icon-opt-btn.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-  .status-badge{font-size:11px;padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:middle;font-weight:500;}
-  .status-making{background:var(--line);color:var(--ink-soft);}
-  .status-selling{background:var(--moss-soft);color:var(--moss);}
-  .status-buyout{background:var(--rust-soft);color:var(--rust);}
+  .search-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .backup-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 
-  .deadline{font-size:12px;margin-top:4px;}
-  .deadline.warn{color:var(--rust);font-weight:700;}
-
-  .settings-panel, .import-confirm{
-    background:var(--card);border:1px solid var(--line);border-radius:4px;
-    padding:12px 14px;margin-top:10px;font-size:13px;
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent-dark);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 200;
+    max-width: 90vw;
+    text-align: center;
   }
-  .settings-panel label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;}
-  .settings-panel input{padding:7px 10px;border:1px solid var(--line);border-radius:4px;font-size:14px;width:120px;}
-  .settings-panel .form-actions{margin-top:10px;}
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .search-row input { flex: 1; min-width: 160px; }
+  .search-row select { flex: 0 0 130px; }
 
-  .option-item{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
-  .option-item input[type=text]{flex:2;}
-  .option-item input[type=number]{flex:1;}
-  .option-item button{background:none;border:none;color:var(--rust);cursor:pointer;font-size:16px;padding:4px 6px;}
-  .option-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);}
-  .option-row:last-child{border-bottom:none;}
-  .option-row .opt-name{font-weight:700;font-size:14px;}
-  .option-row .opt-detail{font-size:12px;color:var(--ink-soft);}
-  .option-row .opt-total{text-align:right;font-variant-numeric:tabular-nums;}
-  .option-row .opt-total .cash{font-size:12px;color:var(--ink-soft);}
-  .option-row .opt-total .total{font-size:15px;font-weight:700;}
-  .best-badge{font-size:11px;background:var(--moss-soft);color:var(--moss);padding:1px 6px;border-radius:3px;margin-left:6px;}
+  .filter-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .filter-btn {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--sub);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .item-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    cursor: pointer;
+    gap: 8px;
+  }
+  .item-name-wrap { flex: 1; min-width: 0; }
+  .item-name { font-size: 17px; font-weight: 600; }
+  .category-badge {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-weight: 500;
+  }
+  .item-best {
+    font-size: 13px;
+    color: var(--good);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .item-best b { font-size: 15px; }
+  .best-line { font-size: 13px; color: var(--good); margin-top: 2px; font-weight: 500; }
+  .chevron { color: var(--sub); font-size: 13px; margin-top: 6px; transition: transform 0.2s; }
+  .item-card.open .chevron { transform: rotate(180deg); }
+
+  .item-edit-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .item-edit-row input[type="text"] { flex: 1; min-width: 120px; }
+  .item-edit-row select { flex: 0 0 110px; }
+
+  .item-body {
+    display: none;
+    margin-top: 14px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  .item-card.open .item-body { display: block; }
+
+  .entry-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .entry-row input { flex: 1; min-width: 100px; }
+  .entry-row input.price { flex: 1.2; min-width: 90px; }
+  .channel-select { flex: 0 0 128px !important; min-width: 0 !important; }
+  .qty-input { flex: 1; min-width: 80px !important; }
+  .unit-input { flex: 1.3; min-width: 100px !important; }
+  .unit-hint { font-size: 12px; color: var(--sub); margin: -4px 0 8px 2px; }
+  .advanced-toggle {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 13px;
+    padding: 4px 0;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .advanced-toggle:hover { text-decoration: underline; }
+  .advanced-fields { margin-bottom: 4px; }
+  .unit-price { font-size: 12px; color: var(--sub); }
+  .unit-price.best { color: var(--good); font-weight: 600; }
+  .add-entry-btn { flex: 0 0 110px; }
+
+  .channel-tag { font-size: 11px; color: var(--sub); margin-left: 4px; white-space: nowrap; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--sub); font-weight: 500; font-size: 12px; }
+  td.price { font-weight: 600; }
+  tr.cheapest td.price { color: var(--good); }
+  tr.cheapest td.store::after { content: " 🏆"; }
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--sub);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 6px;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.15s;
+  }
+  .del-btn:hover { color: var(--bad); }
+  .del-btn .material-icons { font-size: 18px; margin: 0; color: inherit; }
+  .item-actions .del-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+    border-radius: 8px;
+  }
+  .item-actions .del-btn:hover { background: var(--panel); }
+  .mini {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 8px;
+    margin-right: 4px;
+    font-weight: 500;
+  }
+  .mini.del { background: var(--bad); }
+  del.orig { color: var(--sub); font-weight: 400; margin-right: 4px; font-size: 12px; }
+  .disc-tag {
+    font-size: 11px;
+    background: var(--good);
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-left: 4px;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .brand-label { font-size: 11px; color: var(--sub); font-weight: 600; margin-bottom: 2px; }
+  .note-label { font-size: 11px; color: var(--sub); font-style: italic; margin-top: 2px; }
+
+  .disc-panel {
+    background: var(--panel);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    margin: 4px 0 10px;
+  }
+  .disc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    padding: 6px 2px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .disc-item:last-of-type { border-bottom: none; }
+  .disc-item.editing { background: var(--accent-light); border-radius: 8px; padding: 6px 8px; }
+  .disc-item.disabled { opacity: 0.55; }
+  .disc-off-tag {
+    font-size: 11px;
+    background: var(--sub);
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-left: 4px;
+    white-space: nowrap;
+  }
+  .disc-date { color: var(--sub); font-size: 12px; }
+  .disc-actions { display: flex; gap: 4px; }
+  .disc-empty { color: var(--sub); font-size: 13px; padding: 4px 2px; }
+  .disc-form { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+  .disc-form input { flex: 1; min-width: 110px; }
+  .disc-percent { flex: 0 0 92px !important; min-width: 0 !important; }
+  .disc-type { flex: 0 0 110px !important; min-width: 0 !important; }
+  .disc-bogo-wrap { display: none; align-items: center; gap: 4px; font-size: 13px; color: var(--sub); }
+  .disc-qty { flex: 0 0 52px !important; min-width: 0 !important; }
+
+  .empty {
+    text-align: center;
+    color: var(--sub);
+    padding: 40px 0;
+    font-size: 14px;
+  }
+  .item-actions { display: flex; gap: 6px; align-items: flex-start; margin-top: 1px; }
+
+  .chart-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    flex-direction: column;
+  }
+  .chart-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--card);
+  }
+  .chart-back {
+    width: 36px; height: 36px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: 1px solid var(--line); border-radius: 8px; color: var(--ink);
+  }
+  .chart-title {
+    font-size: 16px; font-weight: 600; display: flex; align-items: center;
+    flex: 1; min-width: 140px;
+  }
+  .chart-range-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+  .range-btn {
+    padding: 5px 10px; font-size: 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--card); color: var(--sub);
+    transition: background 0.15s, color 0.15s;
+  }
+  .range-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .chart-scroll {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 16px;
+  }
+  .chart-empty { color: var(--sub); text-align: center; padding-top: 60px; font-size: 14px; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="top">
-    <h1>手作定價帳本</h1>
-    <p>試算商品成本與售價，記錄推薦與避雷店家</p>
-    <div class="util-bar">
-      <button class="link" id="settingsBtn">預設值設定</button>
-      <button class="link" id="exportBtn">匯出備份</button>
-      <button class="link" id="importBtn">匯入備份</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none;">
+  <h1>🛒 比價小幫手</h1>
+  <div class="sub">記錄同一樣東西在不同店家的價格，自動幫你標出最便宜的</div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabHome" onclick="switchScreen('home')">首頁</button>
+    <button class="tab-btn" id="tabStore" onclick="switchScreen('store')">店家</button>
+    <button class="tab-btn" id="tabStats" onclick="switchScreen('stats')">統計</button>
+  </div>
+
+  <div class="backup-row">
+    <button class="small ghost" onclick="exportBackup()">⬇️ 匯出備份</button>
+    <button class="small ghost" onclick="triggerImport()">⬆️ 匯入備份</button>
+    <input type="file" id="importFileInput" accept="application/json" style="display:none;" onchange="handleImportFile(event)">
+  </div>
+
+  <div id="homeScreen">
+    <div class="add-item-row">
+      <input id="newItemInput" type="text" placeholder="新增品項，例如：衛生紙 10包裝">
+      <div class="icon-picker-wrap">
+        <button type="button" class="icon-picker-btn" onclick="toggleIconPicker('new')">
+          <span class="material-icons" id="iconPickerPreview">shopping_cart</span>
+        </button>
+        <div class="icon-picker-panel" id="iconPickerPanel"></div>
+      </div>
+      <select id="newItemCategory"></select>
+      <button onclick="addItem()">新增</button>
     </div>
-    <div id="settingsPanel"></div>
-    <div id="importConfirm"></div>
-  </header>
 
-  <nav class="tabs">
-    <button id="tabProductsBtn" class="active">成本試算</button>
-    <button id="tabStoresBtn">店家清單</button>
-    <button id="tabDecisionsBtn">時間成本比較</button>
-  </nav>
+    <div class="search-row">
+      <input id="searchInput" type="text" placeholder="搜尋品項名稱..." oninput="onSearchInput(this.value)">
+      <select id="sortSelect" onchange="onSortChange(this.value)">
+        <option value="default">預設排序</option>
+        <option value="name">依名稱</option>
+        <option value="price">依最低價</option>
+        <option value="updated">依最近更新</option>
+      </select>
+      <button class="small ghost" id="collapseAllBtn" onclick="toggleCollapseAll()">全部收合</button>
+    </div>
 
-  <section id="secProducts" class="active">
-    <div class="stat-bar" id="productStats"></div>
-    <div class="controls-bar" id="productControls"></div>
-    <div id="productList"><div class="empty">載入中…</div></div>
-    <button class="add-btn" id="addProductBtn">+ 新增產品點子</button>
-  </section>
+    <div class="filter-row" id="filterRow"></div>
 
-  <section id="secStores">
-    <div id="storeList"><div class="empty">載入中…</div></div>
-    <button class="add-btn" id="addStoreBtn">+ 新增店家</button>
-  </section>
+    <div id="itemList"></div>
+    <div id="emptyState" class="empty" style="display:none;"></div>
+  </div>
 
-  <section id="secDecisions">
-    <p style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">
-      比較「自己做／花錢請人／買新的」哪個划算，把你的時間也換算進成本裡一起看。
-    </p>
-    <div id="decisionList"><div class="empty">載入中…</div></div>
-    <button class="add-btn" id="addDecisionBtn">+ 新增比較情境</button>
-  </section>
+  <div id="storeScreen" style="display:none;">
+    <div class="add-item-row">
+      <input id="newStoreInput" type="text" placeholder="新增店家名稱，例如：全聯" list="allStores">
+      <button onclick="addStore()">新增</button>
+    </div>
+    <div class="unit-hint">在這裡管理各店家的滿額優惠（例如滿NT$399打9折、滿NT$500折NT$100），會提醒你哪些店現在有活動，但不會自動算進單一商品的比價裡</div>
+    <div id="storeList"></div>
+    <div id="storeEmptyState" class="empty" style="display:none;"></div>
+  </div>
+
+  <div id="statsScreen" style="display:none;">
+    <div class="stats-range-row" id="statsRangeButtons"></div>
+
+    <div class="stats-section">
+      <div class="stats-section-title">新增花費記錄</div>
+      <div class="entry-row">
+        <input id="expenseDate" type="date">
+        <input id="expenseAmount" type="text" inputmode="numeric" pattern="[0-9]*" oninput="intOnly(this)" placeholder="金額">
+      </div>
+      <div class="entry-row">
+        <input id="expenseNote" type="text" placeholder="備註（例如：這次採買、水電費，可不填）">
+      </div>
+      <div class="entry-row">
+        <button class="small" id="expenseSubmitBtn" onclick="addExpense()">新增</button>
+        <button class="small ghost" id="expenseCancelBtn" style="display:none;" onclick="cancelEditExpense()">取消</button>
+      </div>
+    </div>
+
+    <div id="statsContent"></div>
+  </div>
+
+  <datalist id="allStores"></datalist>
 </div>
 
+<div class="chart-screen" id="chartScreen">
+  <div class="chart-header">
+    <button class="chart-back" onclick="closeChart()"><span class="material-icons">arrow_back</span></button>
+    <div class="chart-title" id="chartTitle"></div>
+    <div class="chart-range-buttons" id="chartRangeButtons"></div>
+  </div>
+  <div class="chart-scroll" id="chartArea"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
 <script>
-let products = [];
+const CATEGORIES = ['日用品', '文具', '食品', '飲料', '化妝品', '保健品', '家電', '服飾', '寵物用品', '其他'];
+
+const ICONS = [
+  { name: 'shopping_cart', label: '購物車' },
+  { name: 'shopping_bag', label: '購物袋' },
+  { name: 'local_grocery_store', label: '超市' },
+  { name: 'fastfood', label: '速食' },
+  { name: 'restaurant', label: '餐點' },
+  { name: 'cake', label: '甜點' },
+  { name: 'icecream', label: '冰品' },
+  { name: 'local_cafe', label: '咖啡' },
+  { name: 'local_bar', label: '飲品' },
+  { name: 'spa', label: '保養' },
+  { name: 'face', label: '化妝品' },
+  { name: 'brush', label: '刷具' },
+  { name: 'local_pharmacy', label: '藥局' },
+  { name: 'checkroom', label: '服飾' },
+  { name: 'devices', label: '3C' },
+  { name: 'laptop', label: '筆電' },
+  { name: 'phone_iphone', label: '手機' },
+  { name: 'tv', label: '電視' },
+  { name: 'headphones', label: '耳機' },
+  { name: 'edit', label: '文具' },
+  { name: 'book', label: '書籍' },
+  { name: 'pets', label: '寵物' },
+  { name: 'child_care', label: '嬰幼兒' },
+  { name: 'toys', label: '玩具' },
+  { name: 'sports_soccer', label: '運動' },
+  { name: 'fitness_center', label: '健身' },
+  { name: 'home', label: '居家' },
+  { name: 'kitchen', label: '廚房' },
+  { name: 'cleaning_services', label: '清潔' },
+  { name: 'local_laundry_service', label: '洗衣' },
+  { name: 'build', label: '工具' },
+  { name: 'directions_car', label: '汽車' },
+  { name: 'local_gas_station', label: '加油' },
+  { name: 'park', label: '園藝' },
+  { name: 'redeem', label: '禮物' },
+  { name: 'card_giftcard', label: '禮品卡' },
+  { name: 'local_offer', label: '特價' },
+  { name: 'receipt', label: '收據' },
+  { name: 'account_balance_wallet', label: '錢包' },
+  { name: 'credit_card', label: '卡片' },
+  { name: 'flight', label: '旅遊' },
+  { name: 'hotel', label: '住宿' },
+  { name: 'beach_access', label: '戶外' },
+  { name: 'music_note', label: '音樂' },
+  { name: 'videogame_asset', label: '遊戲' },
+  { name: 'camera_alt', label: '攝影' },
+  { name: 'local_florist', label: '花卉' },
+  { name: 'liquor', label: '酒類' },
+  { name: 'weekend', label: '沙發' },
+  { name: 'bathtub', label: '衛浴' },
+  { name: 'watch', label: '手錶' },
+  { name: 'pool', label: '游泳' },
+  { name: 'theaters', label: '電影' },
+  { name: 'palette', label: '美術' },
+  { name: 'backpack', label: '背包' },
+  { name: 'umbrella', label: '雨具' },
+  { name: 'computer', label: '電腦' },
+  { name: 'print', label: '列印' },
+  { name: 'local_shipping', label: '宅配' },
+  { name: 'category', label: '其他' }
+];
+
+const CATEGORY_ICON = {
+  '日用品': 'cleaning_services', '文具': 'edit', '食品': 'fastfood', '飲料': 'local_cafe',
+  '化妝品': 'face', '保健品': 'local_pharmacy', '家電': 'devices', '服飾': 'checkroom',
+  '寵物用品': 'pets', '其他': 'category'
+};
+
+let items = [];
 let stores = [];
-let decisions = [];
-let settings = { defaultConsignPercent: 0, defaultHourlyRate: 0 };
+let loaded = false;
+let currentFilter = 'all';
+let searchQuery = '';
 let sortMode = 'default';
-let filterStatus = 'all';
-let filterBuyoutOnly = false;
+let selectedNewIcon = 'shopping_cart';
+let currentChartItemId = null;
+let currentChartRange = '1m';
+let currentScreen = 'home';
+let currentStatsRange = 'month';
+let expenses = [];
+let editingExpenseId = null;
 
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-const fmt = n => (Math.round(n * 10) / 10).toLocaleString('zh-Hant-TW');
+const STORAGE_KEY = 'price-tracker-items';
+const STORE_STORAGE_KEY = 'price-tracker-stores';
+const EXPENSE_STORAGE_KEY = 'price-tracker-expenses';
 
-function compressImage(file, maxDim, quality){
-  return new Promise((resolve, reject)=>{
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = ev=>{
-      img.onload = ()=>{
-        let { width, height } = img;
-        if(width > maxDim || height > maxDim){
-          if(width > height){ height = Math.round(height * maxDim / width); width = maxDim; }
-          else{ width = Math.round(width * maxDim / height); height = maxDim; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = reject;
-      img.src = ev.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-async function loadData(){
-  try{
-    const p = await window.storage.get('products-list', false);
-    products = p && p.value ? JSON.parse(p.value) : [];
-  }catch(e){ products = []; }
-  try{
-    const s = await window.storage.get('stores-list', false);
-    stores = s && s.value ? JSON.parse(s.value) : [];
-  }catch(e){ stores = []; }
-  try{
-    const d = await window.storage.get('decisions-list', false);
-    decisions = d && d.value ? JSON.parse(d.value) : [];
-  }catch(e){ decisions = []; }
-  try{
-    const st = await window.storage.get('app-settings', false);
-    if(st && st.value) settings = Object.assign(settings, JSON.parse(st.value));
-  }catch(e){ /* keep defaults */ }
-  renderProducts();
-  renderStores();
-  renderDecisions();
-}
-
-async function saveSettings(){
-  try{ await window.storage.set('app-settings', JSON.stringify(settings), false); }
-  catch(e){ console.error('save settings failed', e); }
-}
-
-async function saveProducts(){
-  try{ await window.storage.set('products-list', JSON.stringify(products), false); }
-  catch(e){ console.error('save products failed', e); }
-}
-async function saveStores(){
-  try{ await window.storage.set('stores-list', JSON.stringify(stores), false); }
-  catch(e){ console.error('save stores failed', e); }
-}
-async function saveDecisions(){
-  try{ await window.storage.set('decisions-list', JSON.stringify(decisions), false); }
-  catch(e){ console.error('save decisions failed', e); }
-}
-
-function calcProduct(p){
-  const labor = (p.prodHours||0) * (p.hourlyRate||0); // 一次性：畫一張圖的時間成本
-  const itemsTotal = (p.costItems||[]).reduce((s,i)=>s+(i.amount||0),0); // 一次性：整批雜費
-  const oneTimeCost = labor + itemsTotal;
-  const materialsPerUnit = p.materialsCost || 0; // 單件：每份印出來實際耗用的材料
-  const qty = p.quantity || 1;
-  const batchCost = materialsPerUnit * qty + oneTimeCost;
-  const perItemCost = qty ? batchCost / qty : batchCost;
-  const consignPercent = p.consignPercent || 0;
-  const netPerItem = (p.price||0) * (1 - consignPercent/100);
-  const totalNetRevenue = netPerItem * qty;
-  const profitA = totalNetRevenue - batchCost;
-  const marginA = totalNetRevenue ? (profitA / totalNetRevenue * 100) : 0;
-  const buyoutPrice = p.buyoutPrice || 0;
-  const profitB = buyoutPrice - batchCost;
-  const marginB = buyoutPrice ? (profitB / buyoutPrice * 100) : 0;
-  return {
-    labor, itemsTotal, oneTimeCost, materialsPerUnit, perItemCost, qty, batchCost, consignPercent,
-    netPerItem, totalNetRevenue, profitA, marginA, buyoutPrice, profitB, marginB,
-    totalCost: perItemCost, profit: profitA, margin: marginA
-  };
-}
-
-function getDeadlineInfo(p){
-  if(!p.startDate || p.status !== '寄賣中') return null;
-  const start = new Date(p.startDate + 'T00:00:00');
-  if(isNaN(start.getTime())) return null;
-  const days = p.periodType === '1個月' ? 30 : 14;
-  const end = new Date(start.getTime() + days*24*3600*1000);
-  const now = new Date();
-  const diffDays = Math.ceil((end - now) / (24*3600*1000));
-  return { diffDays, overdue: diffDays < 0 };
-}
-
-function initProductControls(){
-  const box = document.getElementById('productControls');
-  box.innerHTML = `
-    <select id="sortSelect">
-      <option value="default">排序：新增順序</option>
-      <option value="marginDesc">排序：毛利率高到低</option>
-      <option value="marginAsc">排序：毛利率低到高</option>
-      <option value="name">排序：名稱</option>
-    </select>
-    <select id="filterStatusSelect">
-      <option value="all">狀態：全部</option>
-      <option value="製作中">狀態：製作中</option>
-      <option value="寄賣中">狀態：寄賣中</option>
-      <option value="已轉買斷">狀態：已轉買斷</option>
-    </select>
-    <label class="chk"><input type="checkbox" id="filterBuyoutChk"> 只看可買斷</label>
-  `;
-  document.getElementById('sortSelect').addEventListener('change', e=>{ sortMode = e.target.value; renderProducts(); });
-  document.getElementById('filterStatusSelect').addEventListener('change', e=>{ filterStatus = e.target.value; renderProducts(); });
-  document.getElementById('filterBuyoutChk').addEventListener('change', e=>{ filterBuyoutOnly = e.target.checked; renderProducts(); });
-}
-
-function getVisibleProducts(){
-  let arr = products.slice();
-  if(filterStatus !== 'all') arr = arr.filter(p => (p.status||'製作中') === filterStatus);
-  if(filterBuyoutOnly) arr = arr.filter(p => p.buyoutPrice > 0);
-  if(sortMode === 'marginDesc') arr.sort((a,b)=>calcProduct(b).margin - calcProduct(a).margin);
-  else if(sortMode === 'marginAsc') arr.sort((a,b)=>calcProduct(a).margin - calcProduct(b).margin);
-  else if(sortMode === 'name') arr.sort((a,b)=>a.name.localeCompare(b.name,'zh-Hant'));
-  return arr;
-}
-
-function statusClass(status){
-  if(status === '寄賣中') return 'status-selling';
-  if(status === '已轉買斷') return 'status-buyout';
-  return 'status-making';
-}
-
-function renderProducts(){
-  const list = document.getElementById('productList');
-  const statBar = document.getElementById('productStats');
-  if(products.length === 0){
-    list.innerHTML = '<div class="empty">還沒有產品點子，點下方新增一個吧</div>';
-    statBar.innerHTML = '';
-    return;
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    items = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    items = [];
   }
-  const avgMargin = products.reduce((s,p)=>s+calcProduct(p).margin,0)/products.length;
-  const totalProfit = products.reduce((s,p)=>s+calcProduct(p).profitA,0);
-  statBar.innerHTML = `
-    <div class="stat"><div class="label">產品數</div><div class="val">${products.length}</div></div>
-    <div class="stat"><div class="label">平均毛利率</div><div class="val">${fmt(avgMargin)}%</div></div>
-    <div class="stat"><div class="label">預估整批毛利</div><div class="val">NT$${fmt(totalProfit)}</div></div>
-  `;
-  const visible = getVisibleProducts();
-  if(visible.length === 0){
-    list.innerHTML = '<div class="empty">沒有符合篩選條件的產品</div>';
-    return;
+  try {
+    const rawStores = localStorage.getItem(STORE_STORAGE_KEY);
+    stores = rawStores ? JSON.parse(rawStores) : [];
+  } catch (e) {
+    stores = [];
   }
-  list.innerHTML = visible.map(p=>{
-    const c = calcProduct(p);
-    const status = p.status || '製作中';
-    const deadline = getDeadlineInfo(p);
-    const marginClass = c.margin >= 30 ? 'good' : (c.margin < 0 ? 'bad' : '');
-    const itemsRows = (p.costItems||[]).map(i=>`<tr><td>${escapeHtml(i.name)}</td><td>NT$${fmt(i.amount)}</td></tr>`).join('');
-    return `
-    <div class="row-item" data-id="${p.id}">
-      <div class="row-head" onclick="toggleDetails('${p.id}')">
-        <div>
-          <div class="title">${escapeHtml(p.name)}<span class="status-badge ${statusClass(status)}">${status}</span>${p.buyoutPrice>0 ? '<span class="badge">可轉版權買斷</span>' : ''}</div>
-          <div class="sub">均攤單件成本 NT$${fmt(c.perItemCost)} · 這批 ${fmt(c.qty)} 件 · 抽成 ${fmt(c.consignPercent)}%</div>
-          ${deadline ? `<div class="deadline ${deadline.overdue?'warn':''}">${deadline.overdue ? `已超過期限 ${Math.abs(deadline.diffDays)} 天` : `距離期限還有 ${deadline.diffDays} 天`}</div>` : ''}
-        </div>
-        <div class="row-nums">
-          <div class="price">NT$${fmt(p.price)}</div>
-          <div class="margin ${marginClass}">整批毛利 NT$${fmt(c.profit)}（${fmt(c.margin)}%）</div>
-        </div>
-      </div>
-      <div class="details" id="details-${p.id}">
-        ${p.image ? `<img src="${p.image}" alt="${escapeHtml(p.name)}">` : ''}
-        <div class="scenario" style="margin-top:0;border-top:none;padding-top:0;">
-          <div class="scenario-title">整批一次性成本（畫一次圖 + 雜費，不隨數量倍增）</div>
-          <table>
-            <tr><td>製作(繪圖)時間 × 時薪</td><td>NT$${fmt(c.labor)}</td></tr>
-            ${itemsRows}
-            <tr><td><b>一次性成本小計</b></td><td><b>NT$${fmt(c.oneTimeCost)}</b></td></tr>
-          </table>
-        </div>
-        <div class="scenario">
-          <div class="scenario-title">單件材料成本（每份實際耗用的材料）</div>
-          <table>
-            <tr><td>材料成本（單件）</td><td>NT$${fmt(c.materialsPerUnit)}</td></tr>
-            <tr><td>這批數量</td><td>${fmt(c.qty)}</td></tr>
-          </table>
-        </div>
-        <div class="scenario">
-          <div class="scenario-title">整批總成本 = 材料成本 × 數量 + 一次性成本</div>
-          <table>
-            <tr><td><b>整批總成本</b></td><td><b>NT$${fmt(c.batchCost)}</b></td></tr>
-            <tr><td>售價（單件）</td><td>NT$${fmt(p.price)}</td></tr>
-          </table>
-        </div>
-        <div class="scenario">
-          <div class="scenario-title">情境A：寄賣抽成 ${fmt(c.consignPercent)}%（沒提早賣完）</div>
-          <table>
-            <tr><td>單件淨收入</td><td>NT$${fmt(c.netPerItem)}</td></tr>
-            <tr><td>整批毛利</td><td>NT$${fmt(c.profitA)}</td></tr>
-            <tr><td>毛利率</td><td>${fmt(c.marginA)}%</td></tr>
-          </table>
-        </div>
-        ${c.buyoutPrice > 0 ? `
-        <div class="scenario">
-          <div class="scenario-title">情境B：${escapeHtml(p.periodType||'')}內提早賣完 → 轉版權買斷</div>
-          <table>
-            <tr><td>買斷金額</td><td>NT$${fmt(c.buyoutPrice)}</td></tr>
-            <tr><td>整批毛利</td><td>NT$${fmt(c.profitB)}</td></tr>
-            <tr><td>毛利率</td><td>${fmt(c.marginB)}%</td></tr>
-          </table>
-        </div>` : ''}
-        <div class="actions">
-          <button class="link" onclick="editProduct('${p.id}')">編輯</button>
-          ${confirmDeleteProductId === p.id
-            ? `<span style="color:var(--rust);font-size:12px;">確定刪除？</span>
-               <button class="link danger" onclick="deleteProduct('${p.id}')">確認刪除</button>
-               <button class="link" onclick="confirmDeleteProductId=null; renderProducts();">取消</button>`
-            : `<button class="link danger" onclick="deleteProduct('${p.id}')">刪除</button>`
-          }
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function escapeHtml(s){
-  const d = document.createElement('div');
-  d.textContent = s == null ? '' : String(s);
-  return d.innerHTML;
-}
-
-function toggleDetails(id){
-  const el = document.getElementById('details-'+id);
-  if(el) el.classList.toggle('open');
-}
-
-let editingProductId = null;
-function addProductForm(){
-  editingProductId = null;
-  showProductForm({
-    id: uid(), name:'', image:null, prodHours:0, hourlyRate:0, materialsCost:0,
-    costItems:[
-      {id:uid(), name:'影印費', amount:0},
-      {id:uid(), name:'裁切費', amount:0},
-      {id:uid(), name:'運費', amount:0}
-    ],
-    price:0,
-    quantity:1,
-    consignPercent: settings.defaultConsignPercent || 0,
-    periodType:'2週',
-    buyoutPrice:0,
-    status:'製作中',
-    startDate:''
-  }, true);
-}
-function editProduct(id){
-  const p = products.find(x=>x.id===id);
-  if(!p) return;
-  editingProductId = id;
-  showProductForm(JSON.parse(JSON.stringify(p)), false);
-}
-let confirmDeleteProductId = null;
-function deleteProduct(id){
-  if(confirmDeleteProductId !== id){
-    confirmDeleteProductId = id;
-    renderProducts();
-    return;
+  try {
+    const rawExpenses = localStorage.getItem(EXPENSE_STORAGE_KEY);
+    expenses = rawExpenses ? JSON.parse(rawExpenses) : [];
+  } catch (e) {
+    expenses = [];
   }
-  confirmDeleteProductId = null;
-  products = products.filter(p=>p.id!==id);
-  saveProducts();
-  renderProducts();
-}
-
-function showProductForm(data, isNew){
-  const existing = document.getElementById('productFormWrap');
-  if(existing) existing.remove();
-  const wrap = document.createElement('form');
-  wrap.className = 'editor';
-  wrap.id = 'productFormWrap';
-  wrap.innerHTML = `
-    <label>產品名稱</label>
-    <input type="text" id="f_name" value="${escapeHtml(data.name)}" placeholder="例如：手繪貼紙 A 款">
-    <label>參考圖片</label>
-    <input type="file" id="f_image" accept="image/*">
-    <div id="f_image_preview"></div>
-    <label>製作(繪圖)時間（小時，畫一次的時間，整批只算一次）</label>
-    <input type="number" id="f_hours" value="${data.prodHours||0}" min="0" step="0.1">
-    <label>時薪</label>
-    <input type="number" id="f_rate" value="${data.hourlyRate||0}" min="0" step="1">
-    <label>材料成本（單件，每份印出來實際耗用的材料，沒有就填0）</label>
-    <input type="number" id="f_materials" value="${data.materialsCost||0}" min="0" step="1">
-    <label>其他成本項目</label>
-    <div id="f_costItems"></div>
-    <button type="button" class="add-btn" id="f_addCostItem" style="margin-top:0;">+ 新增成本項目</button>
-    <label>售價</label>
-    <input type="number" id="f_price" value="${data.price||0}" min="0" step="1">
-    <label>這批數量</label>
-    <input type="number" id="f_qty" value="${data.quantity||1}" min="1" step="1">
-    <label>寄賣抽成 %（朋友店裡抽成）</label>
-    <input type="number" id="f_consign" value="${data.consignPercent||0}" min="0" max="100" step="1">
-    <label>寄賣期限</label>
-    <select id="f_period">
-      <option value="2週" ${data.periodType==='2週'?'selected':''}>2 週</option>
-      <option value="1個月" ${data.periodType==='1個月'?'selected':''}>1 個月</option>
-    </select>
-    <label>版權買斷價（提早賣完時，整批一次性金額，選填）</label>
-    <input type="number" id="f_buyout" value="${data.buyoutPrice||0}" min="0" step="1">
-    <label>狀態</label>
-    <select id="f_status">
-      <option value="製作中" ${(data.status||'製作中')==='製作中'?'selected':''}>製作中</option>
-      <option value="寄賣中" ${data.status==='寄賣中'?'selected':''}>寄賣中</option>
-      <option value="已轉買斷" ${data.status==='已轉買斷'?'selected':''}>已轉買斷</option>
-    </select>
-    <label>寄賣開始日期（選填，用來算期限倒數）</label>
-    <input type="date" id="f_startDate" value="${data.startDate||''}">
-    <div class="err" id="f_err" style="display:none;"></div>
-    <div class="form-actions">
-      <button type="button" class="btn btn-primary" id="f_save">${isNew?'新增':'儲存'}</button>
-      <button type="button" class="btn btn-secondary" id="f_cancel">取消</button>
-    </div>
-  `;
-  const list = document.getElementById('productList');
-  list.parentNode.insertBefore(wrap, list);
-
-  let currentImage = data.image;
-  let costItems = data.costItems.slice();
-
-  function renderCostItems(){
-    const box = document.getElementById('f_costItems');
-    box.innerHTML = costItems.map((it,idx)=>`
-      <div class="cost-item">
-        <input type="text" value="${escapeHtml(it.name)}" data-idx="${idx}" data-field="name">
-        <input type="number" value="${it.amount}" data-idx="${idx}" data-field="amount" min="0" step="1">
-        <button type="button" data-idx="${idx}" data-action="remove">×</button>
-      </div>
-    `).join('');
-    box.querySelectorAll('input').forEach(inp=>{
-      inp.addEventListener('input', e=>{
-        const idx = +e.target.dataset.idx;
-        const field = e.target.dataset.field;
-        costItems[idx][field] = field==='amount' ? parseFloat(e.target.value)||0 : e.target.value;
-      });
-    });
-    box.querySelectorAll('button[data-action=remove]').forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        const idx = +e.target.dataset.idx;
-        costItems.splice(idx,1);
-        renderCostItems();
-      });
-    });
-  }
-  renderCostItems();
-
-  document.getElementById('f_addCostItem').addEventListener('click', ()=>{
-    costItems.push({id:uid(), name:'', amount:0});
-    renderCostItems();
-  });
-
-  if(currentImage){
-    document.getElementById('f_image_preview').innerHTML = `<img src="${currentImage}" style="max-width:100%;border-radius:4px;margin:8px 0;">`;
-  }
-  document.getElementById('f_image').addEventListener('change', async e=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    document.getElementById('f_image_preview').innerHTML = '<div class="empty" style="padding:8px 0;">圖片處理中…</div>';
-    try{
-      currentImage = await compressImage(file, 900, 0.72);
-    }catch(err){
-      currentImage = await new Promise(res=>{
-        const reader = new FileReader();
-        reader.onload = ev=>res(ev.target.result);
-        reader.readAsDataURL(file);
-      });
-    }
-    document.getElementById('f_image_preview').innerHTML = `<img src="${currentImage}" style="max-width:100%;border-radius:4px;margin:8px 0;">`;
-  });
-
-  document.getElementById('f_cancel').addEventListener('click', ()=>{
-    wrap.remove();
-  });
-
-  document.getElementById('f_save').addEventListener('click', async ()=>{
-    const name = document.getElementById('f_name').value.trim();
-    const errEl = document.getElementById('f_err');
-    if(!name){
-      errEl.textContent = '請輸入產品名稱';
-      errEl.style.display = 'block';
-      return;
-    }
-    errEl.style.display = 'none';
-    const newData = {
-      id: data.id,
-      name,
-      image: currentImage,
-      prodHours: parseFloat(document.getElementById('f_hours').value)||0,
-      hourlyRate: parseFloat(document.getElementById('f_rate').value)||0,
-      materialsCost: parseFloat(document.getElementById('f_materials').value)||0,
-      costItems: costItems.filter(i=>i.name.trim()!==''),
-      price: parseFloat(document.getElementById('f_price').value)||0,
-      quantity: parseFloat(document.getElementById('f_qty').value)||1,
-      consignPercent: parseFloat(document.getElementById('f_consign').value)||0,
-      periodType: document.getElementById('f_period').value,
-      buyoutPrice: parseFloat(document.getElementById('f_buyout').value)||0,
-      status: document.getElementById('f_status').value,
-      startDate: document.getElementById('f_startDate').value
-    };
-    if(isNew){
-      products.push(newData);
-    }else{
-      const idx = products.findIndex(p=>p.id===newData.id);
-      if(idx>=0) products[idx] = newData;
-    }
-    await saveProducts();
-    wrap.remove();
-    renderProducts();
-  });
-}
-
-// ---- Stores ----
-function renderStores(){
-  const list = document.getElementById('storeList');
-  if(stores.length === 0){
-    list.innerHTML = '<div class="empty">還沒有店家紀錄，點下方新增一個吧</div>';
-    return;
-  }
-  const recommend = stores.filter(s=>s.type==='推薦');
-  const avoid = stores.filter(s=>s.type==='避雷');
-  function section(title, arr, rustClass){
-    if(arr.length===0) return '';
-    return `<h3 style="font-size:15px;margin:18px 0 8px;">${title}</h3>` + arr.map(s=>`
-      <div class="row-item ${rustClass?'rust':''}" data-id="${s.id}">
-        <div class="row-head" onclick="toggleDetails('${s.id}')">
-          <div>
-            <div class="title">${escapeHtml(s.name)}</div>
-            <div class="sub">${escapeHtml(s.category||'')}</div>
-          </div>
-        </div>
-        <div class="details" id="details-${s.id}">
-          <div class="reason">${escapeHtml(s.reason||'（未填寫原因）')}</div>
-          ${s.link ? `<div style="margin-top:6px;"><a href="${escapeHtml(s.link)}" target="_blank" rel="noopener">${escapeHtml(s.link)}</a></div>` : ''}
-          <div class="actions">
-            <button class="link" onclick="editStore('${s.id}')">編輯</button>
-            ${confirmDeleteStoreId === s.id
-              ? `<span style="color:var(--rust);font-size:12px;">確定刪除？</span>
-                 <button class="link danger" onclick="deleteStore('${s.id}')">確認刪除</button>
-                 <button class="link" onclick="confirmDeleteStoreId=null; renderStores();">取消</button>`
-              : `<button class="link danger" onclick="deleteStore('${s.id}')">刪除</button>`
-            }
-          </div>
-        </div>
-      </div>
-    `).join('');
-  }
-  list.innerHTML = section('推薦店家', recommend, false) + section('避雷店家', avoid, true);
-}
-
-function editStore(id){
-  const s = stores.find(x=>x.id===id);
-  if(!s) return;
-  showStoreForm(JSON.parse(JSON.stringify(s)), false);
-}
-let confirmDeleteStoreId = null;
-function deleteStore(id){
-  if(confirmDeleteStoreId !== id){
-    confirmDeleteStoreId = id;
-    renderStores();
-    return;
-  }
-  confirmDeleteStoreId = null;
-  stores = stores.filter(s=>s.id!==id);
-  saveStores();
+  loaded = true;
+  initCategorySelect();
+  const expenseDateInput = document.getElementById('expenseDate');
+  if (expenseDateInput) expenseDateInput.value = todayStr();
+  render();
   renderStores();
 }
-function addStoreForm(){
-  showStoreForm({id:uid(), name:'', category:'', type:'推薦', reason:'', link:''}, true);
-}
 
-function showStoreForm(data, isNew){
-  const existing = document.getElementById('storeFormWrap');
-  if(existing) existing.remove();
-  const wrap = document.createElement('form');
-  wrap.className = 'editor';
-  wrap.id = 'storeFormWrap';
-  wrap.innerHTML = `
-    <label>店家名稱</label>
-    <input type="text" id="s_name" value="${escapeHtml(data.name)}" placeholder="例如：OO印刷行">
-    <label>類別</label>
-    <input type="text" id="s_category" value="${escapeHtml(data.category)}" placeholder="例如：印刷 / 裁切 / 材料">
-    <label>類型</label>
-    <div class="type-toggle">
-      <button type="button" id="s_type_rec" class="${data.type==='推薦'?'sel-moss':''}">推薦</button>
-      <button type="button" id="s_type_avoid" class="${data.type==='避雷'?'sel-rust':''}">避雷</button>
-    </div>
-    <label>原因</label>
-    <textarea id="s_reason" placeholder="說明推薦或避雷的原因">${escapeHtml(data.reason)}</textarea>
-    <label>連結／聯絡方式（選填）</label>
-    <input type="text" id="s_link" value="${escapeHtml(data.link||'')}" placeholder="網址或聯絡資訊">
-    <div class="err" id="s_err" style="display:none;"></div>
-    <div class="form-actions">
-      <button type="button" class="btn btn-primary" id="s_save">${isNew?'新增':'儲存'}</button>
-      <button type="button" class="btn btn-secondary" id="s_cancel">取消</button>
-    </div>
-  `;
-  const list = document.getElementById('storeList');
-  list.parentNode.insertBefore(wrap, list);
+function initCategorySelect() {
+  const sel = document.getElementById('newItemCategory');
+  sel.innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
 
-  let curType = data.type;
-  function refreshType(){
-    document.getElementById('s_type_rec').className = curType==='推薦' ? 'sel-moss' : '';
-    document.getElementById('s_type_avoid').className = curType==='避雷' ? 'sel-rust' : '';
-  }
-  document.getElementById('s_type_rec').addEventListener('click', ()=>{ curType='推薦'; refreshType(); });
-  document.getElementById('s_type_avoid').addEventListener('click', ()=>{ curType='避雷'; refreshType(); });
-
-  document.getElementById('s_cancel').addEventListener('click', ()=> wrap.remove());
-
-  document.getElementById('s_save').addEventListener('click', async ()=>{
-    const name = document.getElementById('s_name').value.trim();
-    const reason = document.getElementById('s_reason').value.trim();
-    const errEl = document.getElementById('s_err');
-    if(!name){
-      errEl.textContent = '請輸入店家名稱';
-      errEl.style.display = 'block';
-      return;
-    }
-    if(!reason){
-      errEl.textContent = '請填寫原因';
-      errEl.style.display = 'block';
-      return;
-    }
-    errEl.style.display = 'none';
-    const newData = {
-      id: data.id,
-      name,
-      category: document.getElementById('s_category').value.trim(),
-      type: curType,
-      reason,
-      link: document.getElementById('s_link').value.trim()
-    };
-    if(isNew){
-      stores.push(newData);
-    }else{
-      const idx = stores.findIndex(s=>s.id===newData.id);
-      if(idx>=0) stores[idx] = newData;
-    }
-    await saveStores();
-    wrap.remove();
-    renderStores();
+  sel.addEventListener('change', () => {
+    const def = CATEGORY_ICON[sel.value];
+    if (def) pickIcon('new', def);
   });
-}
 
-// ---- Time-cost decisions ----
-function calcDecisionOptions(d){
-  const rate = d.hourlyRate || 0;
-  const opts = (d.options||[]).map(o=>{
-    const timeCost = (o.hours||0) * rate;
-    const total = (o.cash||0) + timeCost;
-    return { ...o, timeCost, total };
-  });
-  let minTotalId = null, minCashId = null;
-  if(opts.length){
-    minTotalId = opts.reduce((a,b)=> b.total < a.total ? b : a).id;
-    minCashId = opts.reduce((a,b)=> b.cash < a.cash ? b : a).id;
-  }
-  return { opts, minTotalId, minCashId };
-}
-
-function renderDecisions(){
-  const list = document.getElementById('decisionList');
-  if(decisions.length === 0){
-    list.innerHTML = '<div class="empty">還沒有比較情境，點下方新增一個吧</div>';
-    return;
-  }
-  list.innerHTML = decisions.map(d=>{
-    const { opts, minTotalId, minCashId } = calcDecisionOptions(d);
-    const rows = opts.map(o=>`
-      <div class="option-row">
-        <div>
-          <div class="opt-name">${escapeHtml(o.name)}${o.id===minTotalId?'<span class="best-badge">總成本最低</span>':''}${o.id===minCashId && o.id!==minTotalId?'<span class="best-badge" style="background:var(--rust-soft);color:var(--rust);">現金最省</span>':''}</div>
-          <div class="opt-detail">現金 NT$${fmt(o.cash)} + 時間 ${fmt(o.hours)}h × NT$${fmt(d.hourlyRate)}/h</div>
-        </div>
-        <div class="opt-total">
-          <div class="cash">現金 NT$${fmt(o.cash)}</div>
-          <div class="total">總成本 NT$${fmt(o.total)}</div>
-        </div>
-      </div>
-    `).join('');
-    return `
-    <div class="row-item" data-id="${d.id}">
-      <div class="row-head" onclick="toggleDetails('${d.id}')">
-        <div>
-          <div class="title">${escapeHtml(d.title)}</div>
-          <div class="sub">時薪 NT$${fmt(d.hourlyRate)} · ${opts.length} 個方案</div>
-        </div>
-      </div>
-      <div class="details" id="details-${d.id}">
-        ${rows}
-        <div class="actions">
-          <button class="link" onclick="editDecision('${d.id}')">編輯</button>
-          ${confirmDeleteDecisionId === d.id
-            ? `<span style="color:var(--rust);font-size:12px;">確定刪除？</span>
-               <button class="link danger" onclick="deleteDecision('${d.id}')">確認刪除</button>
-               <button class="link" onclick="confirmDeleteDecisionId=null; renderDecisions();">取消</button>`
-            : `<button class="link danger" onclick="deleteDecision('${d.id}')">刪除</button>`
-          }
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function addDecisionForm(){
-  showDecisionForm({
-    id: uid(),
-    title:'',
-    hourlyRate: settings.defaultHourlyRate || 0,
-    options:[
-      {id:uid(), name:'自己做', cash:0, hours:0},
-      {id:uid(), name:'花錢請人/買新的', cash:0, hours:0}
-    ]
-  }, true);
-}
-function editDecision(id){
-  const d = decisions.find(x=>x.id===id);
-  if(!d) return;
-  showDecisionForm(JSON.parse(JSON.stringify(d)), false);
-}
-let confirmDeleteDecisionId = null;
-function deleteDecision(id){
-  if(confirmDeleteDecisionId !== id){
-    confirmDeleteDecisionId = id;
-    renderDecisions();
-    return;
-  }
-  confirmDeleteDecisionId = null;
-  decisions = decisions.filter(d=>d.id!==id);
-  saveDecisions();
-  renderDecisions();
-}
-
-function showDecisionForm(data, isNew){
-  const existing = document.getElementById('decisionFormWrap');
-  if(existing) existing.remove();
-  const wrap = document.createElement('form');
-  wrap.className = 'editor';
-  wrap.id = 'decisionFormWrap';
-  wrap.innerHTML = `
-    <label>情境名稱</label>
-    <input type="text" id="d_title" value="${escapeHtml(data.title)}" placeholder="例如：晚餐吃什麼 / 洗衣機壞了">
-    <label>時薪（你的時間換算成本）</label>
-    <input type="number" id="d_rate" value="${data.hourlyRate||0}" min="0" step="1">
-    <label>方案比較</label>
-    <div id="d_options"></div>
-    <button type="button" class="add-btn" id="d_addOption" style="margin-top:0;">+ 新增方案</button>
-    <div class="err" id="d_err" style="display:none;"></div>
-    <div class="form-actions">
-      <button type="button" class="btn btn-primary" id="d_save">${isNew?'新增':'儲存'}</button>
-      <button type="button" class="btn btn-secondary" id="d_cancel">取消</button>
-    </div>
-  `;
-  const list = document.getElementById('decisionList');
-  list.parentNode.insertBefore(wrap, list);
-
-  let options = data.options.slice();
-  function renderOptions(){
-    const box = document.getElementById('d_options');
-    box.innerHTML = options.map((o,idx)=>`
-      <div class="option-item">
-        <input type="text" value="${escapeHtml(o.name)}" data-idx="${idx}" data-field="name" placeholder="方案名稱">
-        <input type="number" value="${o.cash}" data-idx="${idx}" data-field="cash" min="0" step="1" placeholder="現金">
-        <input type="number" value="${o.hours}" data-idx="${idx}" data-field="hours" min="0" step="0.1" placeholder="時數">
-        <button type="button" data-idx="${idx}" data-action="remove">×</button>
-      </div>
-    `).join('');
-    box.querySelectorAll('input').forEach(inp=>{
-      inp.addEventListener('input', e=>{
-        const idx = +e.target.dataset.idx;
-        const field = e.target.dataset.field;
-        options[idx][field] = field==='name' ? e.target.value : (parseFloat(e.target.value)||0);
-      });
+  document.addEventListener('click', (ev) => {
+    document.querySelectorAll('.icon-picker-wrap').forEach(wrap => {
+      if (!wrap.contains(ev.target)) {
+        const panel = wrap.querySelector('.icon-picker-panel');
+        if (panel) panel.style.display = 'none';
+      }
     });
-    box.querySelectorAll('button[data-action=remove]').forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        const idx = +e.target.dataset.idx;
-        options.splice(idx,1);
-        renderOptions();
-      });
-    });
-  }
-  renderOptions();
-
-  document.getElementById('d_addOption').addEventListener('click', ()=>{
-    options.push({id:uid(), name:'', cash:0, hours:0});
-    renderOptions();
-  });
-
-  document.getElementById('d_cancel').addEventListener('click', ()=> wrap.remove());
-
-  document.getElementById('d_save').addEventListener('click', async ()=>{
-    const title = document.getElementById('d_title').value.trim();
-    const errEl = document.getElementById('d_err');
-    const validOptions = options.filter(o=>o.name.trim()!=='');
-    if(!title){
-      errEl.textContent = '請輸入情境名稱';
-      errEl.style.display = 'block';
-      return;
-    }
-    if(validOptions.length < 2){
-      errEl.textContent = '至少需要 2 個方案才能比較';
-      errEl.style.display = 'block';
-      return;
-    }
-    errEl.style.display = 'none';
-    const newData = {
-      id: data.id,
-      title,
-      hourlyRate: parseFloat(document.getElementById('d_rate').value)||0,
-      options: validOptions
-    };
-    if(isNew){
-      decisions.push(newData);
-    }else{
-      const idx = decisions.findIndex(d=>d.id===newData.id);
-      if(idx>=0) decisions[idx] = newData;
-    }
-    await saveDecisions();
-    wrap.remove();
-    renderDecisions();
   });
 }
 
-// ---- Settings ----
-let settingsOpen = false;
-document.getElementById('settingsBtn').addEventListener('click', ()=>{
-  settingsOpen = !settingsOpen;
-  const panel = document.getElementById('settingsPanel');
-  if(!settingsOpen){ panel.innerHTML = ''; return; }
-  panel.innerHTML = `
-    <div class="settings-panel">
-      <label>預設寄賣抽成 %（新增產品時自動帶入）</label>
-      <input type="number" id="defaultConsignInput" value="${settings.defaultConsignPercent||0}" min="0" max="100" step="1">
-      <label style="margin-top:10px;">預設時薪（產品成本試算、時間成本比較都會用到）</label>
-      <input type="number" id="defaultRateInput" value="${settings.defaultHourlyRate||0}" min="0" step="1">
-      <div class="form-actions">
-        <button type="button" class="btn btn-primary" id="saveSettingsBtn">儲存</button>
-      </div>
-    </div>
-  `;
-  document.getElementById('saveSettingsBtn').addEventListener('click', async ()=>{
-    settings.defaultConsignPercent = parseFloat(document.getElementById('defaultConsignInput').value)||0;
-    settings.defaultHourlyRate = parseFloat(document.getElementById('defaultRateInput').value)||0;
-    await saveSettings();
-    settingsOpen = false;
-    panel.innerHTML = '';
-  });
-});
+function switchScreen(screen) {
+  currentScreen = screen;
+  document.getElementById('homeScreen').style.display = screen === 'home' ? 'block' : 'none';
+  document.getElementById('storeScreen').style.display = screen === 'store' ? 'block' : 'none';
+  document.getElementById('statsScreen').style.display = screen === 'stats' ? 'block' : 'none';
+  document.getElementById('tabHome').classList.toggle('active', screen === 'home');
+  document.getElementById('tabStore').classList.toggle('active', screen === 'store');
+  document.getElementById('tabStats').classList.toggle('active', screen === 'stats');
+  if (screen === 'store') renderStores();
+  if (screen === 'stats') { renderStatsRangeButtons(); renderStats(); }
+}
 
-// ---- Export / Import ----
-document.getElementById('exportBtn').addEventListener('click', ()=>{
-  const payload = JSON.stringify({ products, stores, decisions, settings, exportedAt: new Date().toISOString() }, null, 2);
-  const blob = new Blob([payload], {type:'application/json'});
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch (e) {
+    console.error('儲存失敗', e);
+  }
+}
+
+function saveStores() {
+  try {
+    localStorage.setItem(STORE_STORAGE_KEY, JSON.stringify(stores));
+  } catch (e) {
+    console.error('儲存失敗', e);
+  }
+}
+
+function saveExpenses() {
+  try {
+    localStorage.setItem(EXPENSE_STORAGE_KEY, JSON.stringify(expenses));
+  } catch (e) {
+    console.error('儲存失敗', e);
+  }
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.classList.remove('show'); }, 2600);
+}
+
+function exportBackup() {
+  const data = { items, stores, expenses, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'pricing-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = `price-tracker-backup-${todayStr()}.json`;
   document.body.appendChild(a);
   a.click();
-  a.remove();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
-});
-
-document.getElementById('importBtn').addEventListener('click', ()=>{
-  document.getElementById('importFile').click();
-});
-
-function mergeById(existing, incoming){
-  const map = new Map(existing.map(item=>[item.id, item]));
-  incoming.forEach(item=>map.set(item.id, item));
-  return Array.from(map.values());
 }
 
-let pendingImport = null;
-document.getElementById('importFile').addEventListener('change', e=>{
-  const file = e.target.files[0];
-  if(!file) return;
+function triggerImport() {
+  const input = document.getElementById('importFileInput');
+  if (input) input.click();
+}
+
+function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
   const reader = new FileReader();
-  reader.onload = ev=>{
-    try{
-      const parsed = JSON.parse(ev.target.result);
-      if(!Array.isArray(parsed.products) || !Array.isArray(parsed.stores)){
-        throw new Error('格式不正確');
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || !Array.isArray(data.items)) {
+        alert('檔案格式不正確，無法匯入');
+        return;
       }
-      if(!Array.isArray(parsed.decisions)) parsed.decisions = [];
-      pendingImport = parsed;
-      const box = document.getElementById('importConfirm');
-      box.innerHTML = `
-        <div class="import-confirm">
-          即將匯入 ${parsed.products.length} 個產品、${parsed.stores.length} 個店家紀錄、${parsed.decisions.length} 個比較情境。
-          <div style="margin-top:8px;">
-            <label class="chk" style="margin-bottom:4px;"><input type="radio" name="importMode" value="merge" checked> 合併（保留現有資料，同 ID 的用匯入的覆蓋，其餘不動）</label><br>
-            <label class="chk"><input type="radio" name="importMode" value="overwrite"> 完全覆蓋（清空現有資料，只留匯入的）</label>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-danger" id="confirmImportBtn">確認匯入</button>
-            <button type="button" class="btn btn-secondary" id="cancelImportBtn">取消</button>
-          </div>
-        </div>
-      `;
-      document.getElementById('confirmImportBtn').addEventListener('click', async ()=>{
-        const mode = document.querySelector('input[name="importMode"]:checked').value;
-        if(mode === 'overwrite'){
-          products = pendingImport.products;
-          stores = pendingImport.stores;
-          decisions = pendingImport.decisions;
-        }else{
-          products = mergeById(products, pendingImport.products);
-          stores = mergeById(stores, pendingImport.stores);
-          decisions = mergeById(decisions, pendingImport.decisions);
-        }
-        if(pendingImport.settings) settings = Object.assign(settings, pendingImport.settings);
-        await saveProducts();
-        await saveStores();
-        await saveDecisions();
-        await saveSettings();
-        box.innerHTML = '';
-        renderProducts();
-        renderStores();
-        renderDecisions();
-      });
-      document.getElementById('cancelImportBtn').addEventListener('click', ()=>{
-        box.innerHTML = '';
-        pendingImport = null;
-      });
-    }catch(err){
-      document.getElementById('importConfirm').innerHTML = '<div class="import-confirm" style="color:var(--rust);">檔案格式不正確，無法匯入</div>';
+      if (!confirm('匯入將會覆蓋目前所有資料，確定要繼續嗎？')) return;
+      items = data.items || [];
+      stores = data.stores || [];
+      expenses = data.expenses || [];
+      saveData();
+      saveStores();
+      saveExpenses();
+      render();
+      renderStores();
+      showToast('✅ 匯入完成');
+    } catch (err) {
+      alert('檔案讀取失敗，請確認是正確的備份檔');
     }
-    document.getElementById('importFile').value = '';
   };
   reader.readAsText(file);
-});
-
-// ---- Tabs ----
-const tabs = [
-  { btn:'tabProductsBtn', sec:'secProducts' },
-  { btn:'tabStoresBtn', sec:'secStores' },
-  { btn:'tabDecisionsBtn', sec:'secDecisions' }
-];
-function switchTab(activeBtnId){
-  tabs.forEach(t=>{
-    const isActive = t.btn === activeBtnId;
-    document.getElementById(t.btn).classList.toggle('active', isActive);
-    document.getElementById(t.sec).classList.toggle('active', isActive);
-  });
+  event.target.value = '';
 }
-tabs.forEach(t=>{
-  document.getElementById(t.btn).addEventListener('click', ()=> switchTab(t.btn));
-});
-document.getElementById('addProductBtn').addEventListener('click', addProductForm);
-document.getElementById('addStoreBtn').addEventListener('click', addStoreForm);
-document.getElementById('addDecisionBtn').addEventListener('click', addDecisionForm);
 
-initProductControls();
+function toggleCollapseAll() {
+  const anyOpen = items.some(it => it.open);
+  items.forEach(it => { it.open = !anyOpen; });
+  saveData();
+  render();
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function intOnly(el) {
+  el.value = el.value.replace(/[^\d]/g, '');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ---------- icon picker (shared: 'new' for add-item, item id for editing) ---------- */
+
+function toggleIconPicker(target) {
+  const panelId = target === 'new' ? 'iconPickerPanel' : ('iconPickerPanel-' + target);
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const opening = panel.style.display === 'none' || !panel.style.display;
+  document.querySelectorAll('.icon-picker-panel').forEach(p => { if (p.id !== panelId) p.style.display = 'none'; });
+  if (opening) renderIconPickerPanel(panelId, target);
+  panel.style.display = opening ? 'grid' : 'none';
+}
+
+function renderIconPickerPanel(panelId, target) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  let current = selectedNewIcon;
+  if (target !== 'new') {
+    const it = items.find(i => i.id === target);
+    current = it ? it.icon : 'category';
+  }
+  panel.innerHTML = ICONS.map(i => `
+    <button type="button" class="icon-opt-btn ${i.name === current ? 'selected' : ''}" onclick="pickIcon('${target}','${i.name}')" title="${i.label}">
+      <span class="material-icons">${i.name}</span>
+    </button>
+  `).join('');
+}
+
+function pickIcon(target, name) {
+  if (target === 'new') {
+    selectedNewIcon = name;
+    const preview = document.getElementById('iconPickerPreview');
+    if (preview) preview.textContent = name;
+    const panel = document.getElementById('iconPickerPanel');
+    if (panel) panel.style.display = 'none';
+  } else {
+    const it = items.find(i => i.id === target);
+    if (it) it.icon = name;
+    const preview = document.getElementById('editIconPreview-' + target);
+    if (preview) preview.textContent = name;
+    const panel = document.getElementById('iconPickerPanel-' + target);
+    if (panel) panel.style.display = 'none';
+  }
+}
+
+/* ---------- item CRUD ---------- */
+
+function addItem() {
+  const input = document.getElementById('newItemInput');
+  const catSelect = document.getElementById('newItemCategory');
+  const name = input.value.trim();
+  if (!name) return;
+  const category = catSelect.value || '其他';
+  const icon = selectedNewIcon || 'category';
+  items.push({ id: uid(), name, category, icon, open: true, entries: [] });
+  input.value = '';
+  saveData();
+  render();
+}
+
+function deleteItem(id) {
+  const it = items.find(i => i.id === id);
+  const name = it ? it.name : '這個品項';
+  if (!confirm(`確定要刪除「${name}」嗎？裡面的所有價格記錄也會一併刪除，此動作無法復原。`)) return;
+  items = items.filter(it => it.id !== id);
+  saveData();
+  render();
+}
+
+function toggleOpen(id) {
+  const it = items.find(i => i.id === id);
+  if (it) it.open = !it.open;
+  render();
+}
+
+function startItemEdit(itemId) {
+  const it = items.find(i => i.id === itemId);
+  if (!it) return;
+  it.editingItem = true;
+  it._nameBackup = it.name;
+  it._categoryBackup = it.category;
+  it._iconBackup = it.icon;
+  render();
+}
+
+function cancelItemEdit(itemId) {
+  const it = items.find(i => i.id === itemId);
+  if (!it) return;
+  if (it._nameBackup !== undefined) it.name = it._nameBackup;
+  if (it._categoryBackup !== undefined) it.category = it._categoryBackup;
+  if (it._iconBackup !== undefined) it.icon = it._iconBackup;
+  it.editingItem = false;
+  delete it._nameBackup; delete it._categoryBackup; delete it._iconBackup;
+  render();
+}
+
+function saveItemEdit(itemId) {
+  const it = items.find(i => i.id === itemId);
+  if (!it) return;
+  const nameInput = document.getElementById('editName-' + itemId);
+  const catSelect = document.getElementById('editCategory-' + itemId);
+  const name = nameInput.value.trim();
+  if (!name) return;
+  it.name = name;
+  it.category = catSelect.value || it.category;
+  it.editingItem = false;
+  delete it._nameBackup; delete it._categoryBackup; delete it._iconBackup;
+  saveData();
+  render();
+}
+
+/* ---------- search / sort / filter ---------- */
+
+function onSearchInput(v) { searchQuery = v; render(); }
+function onSortChange(v) { sortMode = v; render(); }
+function setFilter(c) { currentFilter = c; render(); }
+
+function renderFilterRow() {
+  const row = document.getElementById('filterRow');
+  if (!row) return;
+  const all = ['all', ...CATEGORIES];
+  row.innerHTML = all.map(c => {
+    const label = c === 'all' ? '全部' : c;
+    const active = currentFilter === c ? 'active' : '';
+    return `<button class="filter-btn ${active}" onclick="setFilter('${c}')">${label}</button>`;
+  }).join('');
+}
+
+/* ---------- entry CRUD ---------- */
+
+function addEntry(itemId) {
+  const it = items.find(i => i.id === itemId);
+  if (!it) return;
+  const brandInput = document.getElementById('brand-' + itemId);
+  const storeInput = document.getElementById('store-' + itemId);
+  const channelInput = document.getElementById('channel-' + itemId);
+  const priceInput = document.getElementById('price-' + itemId);
+  const qtyInput = document.getElementById('qty-' + itemId);
+  const unitInput = document.getElementById('unit-' + itemId);
+  const noteInput = document.getElementById('note-' + itemId);
+  const brand = (brandInput && brandInput.value.trim()) ? brandInput.value.trim() : null;
+  const store = storeInput.value.trim();
+  const channel = channelInput ? channelInput.value : '實體店面';
+  const price = parseInt(priceInput.value, 10);
+  if (!store || isNaN(price)) return;
+
+  let quantity = null;
+  if (qtyInput) {
+    const q = parseInt(qtyInput.value, 10);
+    if (!isNaN(q) && q > 0) quantity = q;
+  }
+  const unit = (unitInput && unitInput.value.trim()) ? unitInput.value.trim() : null;
+  const note = (noteInput && noteInput.value.trim()) ? noteInput.value.trim() : null;
+
+  const otherEntries = it.editingEntryId ? it.entries.filter(x => x.id !== it.editingEntryId) : it.entries;
+  const priorMin = otherEntries.length ? Math.min(...otherEntries.map(x => x.price)) : null;
+  const isNewLow = priorMin !== null && price < priorMin;
+
+  if (it.editingEntryId) {
+    const e = it.entries.find(x => x.id === it.editingEntryId);
+    if (e) {
+      e.brand = brand; e.store = store; e.channel = channel; e.price = price;
+      e.quantity = quantity; e.unit = unit; e.note = note;
+    }
+    it.editingEntryId = null;
+  } else {
+    it.entries.push({
+      id: uid(), brand, store, channel, price, quantity, unit, note, date: todayStr(),
+      discounts: [], discountOpen: false, editingDiscountId: null
+    });
+  }
+
+  if (brandInput) brandInput.value = '';
+  storeInput.value = '';
+  priceInput.value = '';
+  if (qtyInput) qtyInput.value = '';
+  if (unitInput) unitInput.value = '';
+  if (noteInput) noteInput.value = '';
+  saveData();
+  render();
+  if (isNewLow) showToast(`🎉 這是「${it.name}」記錄過最低的價格！`);
+  const newStoreInput = document.getElementById('store-' + itemId);
+  if (newStoreInput) newStoreInput.focus();
+}
+
+function startEditEntry(itemId, entryId) {
+  const it = items.find(i => i.id === itemId);
+  const e = it && it.entries.find(x => x.id === entryId);
+  if (!e) return;
+  it.editingEntryId = entryId;
+  it.open = true;
+  if (e.brand || e.quantity || e.unit || e.note) it.advancedOpen = true;
+  render();
+  const brandInput = document.getElementById('brand-' + itemId);
+  const storeInput = document.getElementById('store-' + itemId);
+  const channelInput = document.getElementById('channel-' + itemId);
+  const priceInput = document.getElementById('price-' + itemId);
+  const qtyInput = document.getElementById('qty-' + itemId);
+  const unitInput = document.getElementById('unit-' + itemId);
+  const noteInput = document.getElementById('note-' + itemId);
+  if (brandInput) brandInput.value = e.brand || '';
+  if (storeInput) storeInput.value = e.store || '';
+  if (channelInput) channelInput.value = e.channel || '實體店面';
+  if (priceInput) priceInput.value = e.price;
+  if (qtyInput) qtyInput.value = e.quantity || '';
+  if (unitInput) unitInput.value = e.unit || '';
+  if (noteInput) noteInput.value = e.note || '';
+}
+
+function toggleAdvanced(itemId) {
+  const it = items.find(i => i.id === itemId);
+  if (it) it.advancedOpen = !it.advancedOpen;
+  render();
+}
+
+function cancelEditEntry(itemId) {
+  const it = items.find(i => i.id === itemId);
+  if (!it) return;
+  it.editingEntryId = null;
+  render();
+}
+
+function deleteEntry(itemId, entryId) {
+  const it = items.find(i => i.id === itemId);
+  if (!it) return;
+  if (!confirm('確定要刪除這筆價格記錄嗎？此動作無法復原。')) return;
+  it.entries = it.entries.filter(e => e.id !== entryId);
+  saveData();
+  render();
+}
+
+/* ---------- discounts ---------- */
+
+function toggleDiscountPanel(itemId, entryId) {
+  const it = items.find(i => i.id === itemId);
+  const e = it && it.entries.find(x => x.id === entryId);
+  if (!e) return;
+  e.discountOpen = !e.discountOpen;
+  render();
+}
+
+function computeDiscounted(price, percent) {
+  return Math.round(price * percent / 100);
+}
+
+function discountPrice(basePrice, d) {
+  if (d.type === 'member') return d.memberPrice;
+  return computeDiscounted(basePrice, d.percent);
+}
+
+function discountLabel(d) {
+  if (d.type === 'member') return '會員價';
+  if (d.type === 'bogo') return `買${d.buyQty}送${d.freeQty}`;
+  if (d.percent % 10 === 0) return (d.percent / 10) + '折';
+  return d.percent + '%';
+}
+
+function activeDiscount(entry) {
+  const t = todayStr();
+  const active = (entry.discounts || []).filter(d => d.enabled !== false && d.start <= t && (!d.end || d.end >= t));
+  if (!active.length) return null;
+  active.sort((a, b) => discountPrice(entry.price, a) - discountPrice(entry.price, b));
+  return active[0];
+}
+
+function effectivePrice(entry) {
+  const d = activeDiscount(entry);
+  if (d) return discountPrice(entry.price, d);
+  return entry.price;
+}
+
+function toggleDiscTypeUI(entryId) {
+  const typeSel = document.getElementById('discType-' + entryId);
+  const percentInput = document.getElementById('discPercent-' + entryId);
+  const bogoWrap = document.getElementById('discBogoWrap-' + entryId);
+  const memberInput = document.getElementById('discMemberPrice-' + entryId);
+  if (!typeSel) return;
+  const v = typeSel.value;
+  if (percentInput) percentInput.style.display = v === 'percent' ? '' : 'none';
+  if (bogoWrap) bogoWrap.style.display = v === 'bogo' ? 'inline-flex' : 'none';
+  if (memberInput) memberInput.style.display = v === 'member' ? '' : 'none';
+}
+
+function addOrUpdateDiscount(itemId, entryId) {
+  const it = items.find(i => i.id === itemId);
+  const e = it && it.entries.find(x => x.id === entryId);
+  if (!e) return;
+  const typeInput = document.getElementById('discType-' + entryId);
+  const percentInput = document.getElementById('discPercent-' + entryId);
+  const buyInput = document.getElementById('discBuy-' + entryId);
+  const freeInput = document.getElementById('discFree-' + entryId);
+  const memberInput = document.getElementById('discMemberPrice-' + entryId);
+  const startInput = document.getElementById('discStart-' + entryId);
+  const endInput = document.getElementById('discEnd-' + entryId);
+  const type = typeInput ? typeInput.value : 'percent';
+
+  let percent = null, buyQty = null, freeQty = null, memberPrice = null;
+  if (type === 'bogo') {
+    buyQty = parseInt(buyInput.value, 10);
+    freeQty = parseInt(freeInput.value, 10);
+    if (isNaN(buyQty) || buyQty < 1 || isNaN(freeQty) || freeQty < 1) return;
+    percent = Math.round((buyQty / (buyQty + freeQty)) * 100);
+  } else if (type === 'member') {
+    memberPrice = parseInt(memberInput.value, 10);
+    if (isNaN(memberPrice) || memberPrice < 0) return;
+  } else {
+    percent = parseInt(percentInput.value, 10);
+    if (isNaN(percent) || percent < 1 || percent > 99) return;
+  }
+  const start = startInput.value || todayStr();
+  const end = endInput.value || null;
+
+  if (!e.discounts) e.discounts = [];
+  if (e.editingDiscountId) {
+    const d = e.discounts.find(x => x.id === e.editingDiscountId);
+    if (d) { d.type = type; d.percent = percent; d.buyQty = buyQty; d.freeQty = freeQty; d.memberPrice = memberPrice; d.start = start; d.end = end; }
+    e.editingDiscountId = null;
+  } else {
+    e.discounts.push({ id: uid(), type, percent, buyQty, freeQty, memberPrice, start, end });
+  }
+  saveData();
+  render();
+}
+
+function editDiscount(itemId, entryId, discId) {
+  const it = items.find(i => i.id === itemId);
+  const e = it && it.entries.find(x => x.id === entryId);
+  if (!e) return;
+  e.editingDiscountId = discId;
+  e.discountOpen = true;
+  render();
+  const d = e.discounts.find(x => x.id === discId);
+  if (d) {
+    const typeEl = document.getElementById('discType-' + entryId);
+    const pEl = document.getElementById('discPercent-' + entryId);
+    const buyEl = document.getElementById('discBuy-' + entryId);
+    const freeEl = document.getElementById('discFree-' + entryId);
+    const memberEl = document.getElementById('discMemberPrice-' + entryId);
+    const sEl = document.getElementById('discStart-' + entryId);
+    const eEl = document.getElementById('discEnd-' + entryId);
+    if (typeEl) typeEl.value = d.type || 'percent';
+    if (pEl) pEl.value = d.percent;
+    if (buyEl) buyEl.value = d.buyQty || '';
+    if (freeEl) freeEl.value = d.freeQty || '';
+    if (memberEl) memberEl.value = d.memberPrice != null ? d.memberPrice : '';
+    if (sEl) sEl.value = d.start;
+    if (eEl) eEl.value = d.end || '';
+    toggleDiscTypeUI(entryId);
+  }
+}
+
+function cancelEditDiscount(itemId, entryId) {
+  const it = items.find(i => i.id === itemId);
+  const e = it && it.entries.find(x => x.id === entryId);
+  if (!e) return;
+  e.editingDiscountId = null;
+  render();
+}
+
+function deleteDiscount(itemId, entryId, discId) {
+  const it = items.find(i => i.id === itemId);
+  const e = it && it.entries.find(x => x.id === entryId);
+  if (!e) return;
+  if (!confirm('確定要刪除這筆折扣嗎？')) return;
+  e.discounts = (e.discounts || []).filter(x => x.id !== discId);
+  if (e.editingDiscountId === discId) e.editingDiscountId = null;
+  saveData();
+  render();
+}
+
+function toggleDiscountEnabled(itemId, entryId, discId) {
+  const it = items.find(i => i.id === itemId);
+  const e = it && it.entries.find(x => x.id === entryId);
+  if (!e) return;
+  const d = (e.discounts || []).find(x => x.id === discId);
+  if (!d) return;
+  d.enabled = d.enabled === false ? true : false;
+  saveData();
+  render();
+}
+
+/* ---------- unit price analysis ---------- */
+
+function unitPriceOf(e) {
+  if (e.quantity && e.quantity > 0) return effectivePrice(e) / e.quantity;
+  return null;
+}
+
+function unitKeyOf(e) {
+  if (!(e.quantity && e.quantity > 0)) return '';
+  return e.unit && e.unit.trim() ? e.unit.trim().toLowerCase() : '__qty__';
+}
+
+function analyzeEntries(entries) {
+  const groups = {};
+  entries.forEach(e => {
+    const key = unitKeyOf(e);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(e);
+  });
+  const bestIds = new Set();
+  const bestByUnit = {};
+  Object.entries(groups).forEach(([key, list]) => {
+    if (key === '') {
+      const min = Math.min(...list.map(e => effectivePrice(e)));
+      list.filter(e => effectivePrice(e) === min).forEach(e => bestIds.add(e.id));
+    } else {
+      const withUP = list.map(e => ({ e, up: unitPriceOf(e) }));
+      const min = Math.min(...withUP.map(x => x.up));
+      withUP.filter(x => x.up === min).forEach(x => bestIds.add(x.e.id));
+      const label = key === '__qty__' ? '單位' : list.find(e => e.unit && e.unit.trim()).unit.trim();
+      bestByUnit[label] = { unitPrice: min, store: withUP.find(x => x.up === min).e.store };
+    }
+  });
+  return { bestIds, bestByUnit };
+}
+
+function itemMinPrice(it) {
+  if (!it.entries.length) return Infinity;
+  return Math.min(...it.entries.map(e => effectivePrice(e)));
+}
+
+function itemLatestDate(it) {
+  if (!it.entries.length) return '';
+  return it.entries.reduce((max, e) => (e.date > max ? e.date : max), '');
+}
+
+/* ---------- discount panel html ---------- */
+
+function discountPanelHtml(it, e) {
+  const list = (e.discounts || []).slice().sort((a, b) => a.start.localeCompare(b.start));
+  const rows = list.map(d => {
+    const computed = discountPrice(e.price, d);
+    const isEditing = e.editingDiscountId === d.id;
+    const isDisabled = d.enabled === false;
+    const detail = d.type === 'bogo' ? `（相當於${d.percent}%）` : d.type === 'member' ? '' : `（${d.percent}%）`;
+    return `
+      <div class="disc-item ${isEditing ? 'editing' : ''} ${isDisabled ? 'disabled' : ''}">
+        <span>${discountLabel(d)}${detail} → $${computed}${isDisabled ? ' <span class="disc-off-tag">已關閉</span>' : ''}</span>
+        <span class="disc-date">${d.start}${d.end ? ' ~ ' + d.end : ' 起，無期限'}</span>
+        <span class="disc-actions">
+          <button class="mini" onclick="toggleDiscountEnabled('${it.id}','${e.id}','${d.id}')">${isDisabled ? '開啟' : '關閉'}</button>
+          <button class="mini" onclick="editDiscount('${it.id}','${e.id}','${d.id}')">改</button>
+          <button class="mini del" onclick="deleteDiscount('${it.id}','${e.id}','${d.id}')">刪</button>
+        </span>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="disc-panel">
+      ${rows || '<div class="disc-empty">還沒有折扣記錄</div>'}
+      <div class="disc-form">
+        <select id="discType-${e.id}" class="disc-type" onchange="toggleDiscTypeUI('${e.id}')">
+          <option value="percent">一般折扣</option>
+          <option value="bogo">買幾送幾</option>
+          <option value="member">會員價</option>
+        </select>
+        <input id="discPercent-${e.id}" class="disc-percent" type="text" inputmode="numeric" pattern="[0-9]*" oninput="intOnly(this)" placeholder="填90=9折">
+        <span id="discBogoWrap-${e.id}" class="disc-bogo-wrap">
+          買<input id="discBuy-${e.id}" class="disc-qty" type="text" inputmode="numeric" pattern="[0-9]*" oninput="intOnly(this)" placeholder="1">
+          送<input id="discFree-${e.id}" class="disc-qty" type="text" inputmode="numeric" pattern="[0-9]*" oninput="intOnly(this)" placeholder="1">
+        </span>
+        <input id="discMemberPrice-${e.id}" class="disc-percent" type="text" inputmode="numeric" pattern="[0-9]*" oninput="intOnly(this)" placeholder="會員價NT$" style="display:none;">
+        <input id="discStart-${e.id}" type="date" value="${todayStr()}">
+        <input id="discEnd-${e.id}" type="date">
+        <button class="small" onclick="addOrUpdateDiscount('${it.id}','${e.id}')">${e.editingDiscountId ? '更新' : '新增'}</button>
+        ${e.editingDiscountId ? `<button class="small ghost" onclick="cancelEditDiscount('${it.id}','${e.id}')">取消</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- stores & threshold promos ---------- */
+
+function addStore() {
+  const input = document.getElementById('newStoreInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (stores.some(s => s.name === name)) { input.value = ''; return; }
+  stores.push({ id: uid(), name, open: true, promos: [] });
+  input.value = '';
+  saveStores();
+  renderStores();
+}
+
+function deleteStore(id) {
+  const s = stores.find(x => x.id === id);
+  const name = s ? s.name : '這家店';
+  if (!confirm(`確定要刪除「${name}」嗎？裡面設定的優惠也會一併刪除，此動作無法復原。`)) return;
+  stores = stores.filter(s => s.id !== id);
+  saveStores();
+  renderStores();
+}
+
+function toggleStoreOpen(id) {
+  const s = stores.find(x => x.id === id);
+  if (s) s.open = !s.open;
+  renderStores();
+}
+
+function togglePromoTypeUI(storeId) {
+  const typeSel = document.getElementById('promoType-' + storeId);
+  const valueInput = document.getElementById('promoValue-' + storeId);
+  if (!typeSel || !valueInput) return;
+  valueInput.placeholder = typeSel.value === 'percent' ? '打幾%，如90=9折' : '折抵NT$多少';
+}
+
+function addOrUpdatePromo(storeId) {
+  const s = stores.find(x => x.id === storeId);
+  if (!s) return;
+  const typeInput = document.getElementById('promoType-' + storeId);
+  const thresholdInput = document.getElementById('promoThreshold-' + storeId);
+  const valueInput = document.getElementById('promoValue-' + storeId);
+  const startInput = document.getElementById('promoStart-' + storeId);
+  const endInput = document.getElementById('promoEnd-' + storeId);
+  const type = typeInput.value;
+  const threshold = parseInt(thresholdInput.value, 10);
+  const value = parseInt(valueInput.value, 10);
+  if (isNaN(threshold) || threshold <= 0 || isNaN(value) || value <= 0) return;
+  if (type === 'percent' && (value < 1 || value > 99)) return;
+  const start = startInput.value || todayStr();
+  const end = endInput.value || null;
+
+  if (!s.promos) s.promos = [];
+  if (s.editingPromoId) {
+    const p = s.promos.find(x => x.id === s.editingPromoId);
+    if (p) { p.type = type; p.threshold = threshold; p.value = value; p.start = start; p.end = end; }
+    s.editingPromoId = null;
+  } else {
+    s.promos.push({ id: uid(), type, threshold, value, start, end });
+  }
+  saveStores();
+  renderStores();
+}
+
+function editPromo(storeId, promoId) {
+  const s = stores.find(x => x.id === storeId);
+  if (!s) return;
+  s.editingPromoId = promoId;
+  s.open = true;
+  renderStores();
+  const p = s.promos.find(x => x.id === promoId);
+  if (p) {
+    const typeEl = document.getElementById('promoType-' + storeId);
+    const thEl = document.getElementById('promoThreshold-' + storeId);
+    const valEl = document.getElementById('promoValue-' + storeId);
+    const sEl = document.getElementById('promoStart-' + storeId);
+    const eEl = document.getElementById('promoEnd-' + storeId);
+    if (typeEl) typeEl.value = p.type;
+    if (thEl) thEl.value = p.threshold;
+    if (valEl) valEl.value = p.value;
+    if (sEl) sEl.value = p.start;
+    if (eEl) eEl.value = p.end || '';
+    togglePromoTypeUI(storeId);
+  }
+}
+
+function cancelEditPromo(storeId) {
+  const s = stores.find(x => x.id === storeId);
+  if (!s) return;
+  s.editingPromoId = null;
+  renderStores();
+}
+
+function deletePromo(storeId, promoId) {
+  const s = stores.find(x => x.id === storeId);
+  if (!s) return;
+  if (!confirm('確定要刪除這筆優惠嗎？')) return;
+  s.promos = (s.promos || []).filter(p => p.id !== promoId);
+  if (s.editingPromoId === promoId) s.editingPromoId = null;
+  saveStores();
+  renderStores();
+}
+
+function togglePromoEnabled(storeId, promoId) {
+  const s = stores.find(x => x.id === storeId);
+  const p = s && (s.promos || []).find(x => x.id === promoId);
+  if (!p) return;
+  p.enabled = p.enabled === false ? true : false;
+  saveStores();
+  renderStores();
+}
+
+function promoLabel(p) {
+  if (p.type === 'percent') {
+    const foldLabel = p.value % 10 === 0 ? (p.value / 10) + '折' : p.value + '%';
+    return `滿NT$${p.threshold} 打${foldLabel}`;
+  }
+  return `滿NT$${p.threshold} 折NT$${p.value}`;
+}
+
+function activeStorePromos(store) {
+  const t = todayStr();
+  return (store.promos || []).filter(p => p.enabled !== false && p.start <= t && (!p.end || p.end >= t));
+}
+
+function storeActivePromo(storeName) {
+  const s = stores.find(x => x.name === storeName);
+  if (!s) return null;
+  const active = activeStorePromos(s);
+  return active.length ? active[0] : null;
+}
+
+function renderStores() {
+  const list = document.getElementById('storeList');
+  const empty = document.getElementById('storeEmptyState');
+  if (!list || !empty) return;
+
+  if (stores.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    empty.textContent = '還沒有任何店家，先新增一個吧！';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = stores.map(s => {
+    const promos = (s.promos || []).slice().sort((a, b) => a.start.localeCompare(b.start));
+    const t = todayStr();
+    const promoRows = promos.map(p => {
+      const isEditing = s.editingPromoId === p.id;
+      const isDisabled = p.enabled === false;
+      const isActive = !isDisabled && p.start <= t && (!p.end || p.end >= t);
+      return `
+        <div class="disc-item ${isEditing ? 'editing' : ''} ${isDisabled ? 'disabled' : ''}">
+          <span>${escapeHtml(promoLabel(p))}${isActive ? ' <span class="promo-badge">生效中</span>' : ''}${isDisabled ? ' <span class="disc-off-tag">已關閉</span>' : ''}</span>
+          <span class="disc-date">${p.start}${p.end ? ' ~ ' + p.end : ' 起，無期限'}</span>
+          <span class="disc-actions">
+            <button class="mini" onclick="togglePromoEnabled('${s.id}','${p.id}')">${isDisabled ? '開啟' : '關閉'}</button>
+            <button class="mini" onclick="editPromo('${s.id}','${p.id}')">改</button>
+            <button class="mini del" onclick="deletePromo('${s.id}','${p.id}')">刪</button>
+          </span>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="item-card ${s.open ? 'open' : ''}">
+        <div class="item-head" onclick="toggleStoreOpen('${s.id}')">
+          <div class="item-name-wrap">
+            <div class="item-name"><span class="material-icons item-icon">store</span>${escapeHtml(s.name)}</div>
+            <div class="item-best" style="color:var(--sub);">${promos.length ? `共 ${promos.length} 筆優惠` : '還沒有設定優惠'}</div>
+          </div>
+          <div class="item-actions">
+            <button class="del-btn" onclick="event.stopPropagation(); deleteStore('${s.id}')" title="刪除店家">🗑</button>
+            <span class="chevron">▾</span>
+          </div>
+        </div>
+        <div class="item-body">
+          <div class="disc-panel">
+            ${promoRows || '<div class="disc-empty">還沒有優惠記錄</div>'}
+            <div class="disc-form">
+              <select id="promoType-${s.id}" class="disc-type" onchange="togglePromoTypeUI('${s.id}')">
+                <option value="percent">滿額打折</option>
+                <option value="amount">滿額折抵</option>
+              </select>
+              <input id="promoThreshold-${s.id}" class="disc-percent" type="text" inputmode="numeric" pattern="[0-9]*" oninput="intOnly(this)" placeholder="滿NT$多少">
+              <input id="promoValue-${s.id}" class="disc-percent" type="text" inputmode="numeric" pattern="[0-9]*" oninput="intOnly(this)" placeholder="打幾%，如90=9折">
+              <input id="promoStart-${s.id}" type="date" value="${todayStr()}">
+              <input id="promoEnd-${s.id}" type="date">
+              <button class="small" onclick="addOrUpdatePromo('${s.id}')">${s.editingPromoId ? '更新' : '新增'}</button>
+              ${s.editingPromoId ? `<button class="small ghost" onclick="cancelEditPromo('${s.id}')">取消</button>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------- spending stats dashboard ---------- */
+
+function discountAtDate(entry, dateStr) {
+  const list = (entry.discounts || []).filter(d => d.enabled !== false && d.start <= dateStr && (!d.end || d.end >= dateStr));
+  if (!list.length) return null;
+  list.sort((a, b) => discountPrice(entry.price, a) - discountPrice(entry.price, b));
+  return list[0];
+}
+
+function priceAtDate(entry) {
+  const d = discountAtDate(entry, entry.date);
+  return d ? discountPrice(entry.price, d) : entry.price;
+}
+
+function renderStatsRangeButtons() {
+  const wrap = document.getElementById('statsRangeButtons');
+  if (!wrap) return;
+  const ranges = [
+    { key: 'month', label: '本月' },
+    { key: '3m', label: '近3個月' },
+    { key: 'all', label: '全部' }
+  ];
+  wrap.innerHTML = ranges.map(r => `<button class="range-btn ${currentStatsRange === r.key ? 'active' : ''}" onclick="setStatsRange('${r.key}')">${r.label}</button>`).join('');
+}
+
+function setStatsRange(key) {
+  currentStatsRange = key;
+  renderStatsRangeButtons();
+  renderStats();
+}
+
+function addExpense() {
+  const dateInput = document.getElementById('expenseDate');
+  const amountInput = document.getElementById('expenseAmount');
+  const noteInput = document.getElementById('expenseNote');
+  const date = dateInput.value || todayStr();
+  const amount = parseInt(amountInput.value, 10);
+  if (isNaN(amount) || amount <= 0) return;
+  const note = (noteInput && noteInput.value.trim()) ? noteInput.value.trim() : null;
+
+  if (editingExpenseId) {
+    const ex = expenses.find(x => x.id === editingExpenseId);
+    if (ex) { ex.date = date; ex.amount = amount; ex.note = note; }
+    editingExpenseId = null;
+  } else {
+    expenses.push({ id: uid(), date, amount, note });
+  }
+
+  amountInput.value = '';
+  if (noteInput) noteInput.value = '';
+  dateInput.value = todayStr();
+  const submitBtn = document.getElementById('expenseSubmitBtn');
+  if (submitBtn) submitBtn.textContent = '新增';
+  const cancelBtn = document.getElementById('expenseCancelBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+
+  saveExpenses();
+  renderStats();
+}
+
+function editExpense(id) {
+  const ex = expenses.find(x => x.id === id);
+  if (!ex) return;
+  editingExpenseId = id;
+  const dateInput = document.getElementById('expenseDate');
+  const amountInput = document.getElementById('expenseAmount');
+  const noteInput = document.getElementById('expenseNote');
+  if (dateInput) dateInput.value = ex.date;
+  if (amountInput) amountInput.value = ex.amount;
+  if (noteInput) noteInput.value = ex.note || '';
+  const submitBtn = document.getElementById('expenseSubmitBtn');
+  if (submitBtn) submitBtn.textContent = '更新';
+  const cancelBtn = document.getElementById('expenseCancelBtn');
+  if (cancelBtn) cancelBtn.style.display = '';
+}
+
+function cancelEditExpense() {
+  editingExpenseId = null;
+  const dateInput = document.getElementById('expenseDate');
+  const amountInput = document.getElementById('expenseAmount');
+  const noteInput = document.getElementById('expenseNote');
+  if (amountInput) amountInput.value = '';
+  if (noteInput) noteInput.value = '';
+  if (dateInput) dateInput.value = todayStr();
+  const submitBtn = document.getElementById('expenseSubmitBtn');
+  if (submitBtn) submitBtn.textContent = '新增';
+  const cancelBtn = document.getElementById('expenseCancelBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+}
+
+function deleteExpense(id) {
+  if (!confirm('確定要刪除這筆花費記錄嗎？')) return;
+  expenses = expenses.filter(x => x.id !== id);
+  if (editingExpenseId === id) cancelEditExpense();
+  saveExpenses();
+  renderStats();
+}
+
+function renderStats() {
+  const content = document.getElementById('statsContent');
+  if (!content) return;
+
+  const now = new Date();
+  let cutoff = null;
+  if (currentStatsRange === 'month') {
+    cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (currentStatsRange === '3m') {
+    cutoff = new Date(now.getTime() - 90 * 86400000);
+  }
+
+  const filteredExpenses = expenses.filter(ex => !cutoff || new Date(ex.date) >= cutoff);
+  const totalSpend = filteredExpenses.reduce((sum, ex) => sum + ex.amount, 0);
+
+  const allEntries = [];
+  items.forEach(it => {
+    (it.entries || []).forEach(e => {
+      if (!cutoff || new Date(e.date) >= cutoff) {
+        allEntries.push({ item: it, entry: e });
+      }
+    });
+  });
+
+  if (allEntries.length === 0 && filteredExpenses.length === 0) {
+    content.innerHTML = '<div class="empty">這個範圍內還沒有任何記錄</div>';
+    return;
+  }
+
+  let totalSaved = 0;
+  allEntries.forEach(({ entry }) => {
+    const paid = priceAtDate(entry);
+    if (paid < entry.price) totalSaved += (entry.price - paid);
+  });
+
+  const recordCount = allEntries.length;
+  const itemCount = items.length;
+
+  const itemCounts = {};
+  allEntries.forEach(({ item }) => {
+    itemCounts[item.id] = (itemCounts[item.id] || 0) + 1;
+  });
+  const topItems = Object.entries(itemCounts)
+    .map(([id, count]) => ({ item: items.find(i => i.id === id), count }))
+    .filter(x => x.item)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const catAmount = {};
+  allEntries.forEach(({ item, entry }) => {
+    const cat = item.category || '其他';
+    catAmount[cat] = (catAmount[cat] || 0) + priceAtDate(entry);
+  });
+  const catList = Object.entries(catAmount).sort((a, b) => b[1] - a[1]);
+  const maxCat = Math.max(...catList.map(c => c[1]), 1);
+
+  const storeAmount = {};
+  allEntries.forEach(({ entry }) => {
+    storeAmount[entry.store] = (storeAmount[entry.store] || 0) + priceAtDate(entry);
+  });
+  const topStores = Object.entries(storeAmount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  const expenseRows = filteredExpenses.slice().sort((a, b) => b.date.localeCompare(a.date)).map(ex => `
+    <div class="stats-list-row">
+      <span class="stats-list-name">${ex.date}${ex.note ? ' · ' + escapeHtml(ex.note) : ''}</span>
+      <span class="stats-list-count">NT$${ex.amount}</span>
+      <span class="disc-actions">
+        <button class="mini" onclick="editExpense('${ex.id}')">改</button>
+        <button class="mini del" onclick="deleteExpense('${ex.id}')">刪</button>
+      </span>
+    </div>
+  `).join('');
+
+  content.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">總花費（自己記的）</div>
+        <div class="stat-value">NT$${totalSpend}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">比價折扣省下</div>
+        <div class="stat-value" style="color:var(--good);">NT$${totalSaved}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">比價記錄筆數</div>
+        <div class="stat-value">${recordCount}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">追蹤品項數</div>
+        <div class="stat-value">${itemCount}</div>
+      </div>
+    </div>
+
+    <div class="stats-section">
+      <div class="stats-section-title">花費記錄</div>
+      ${expenseRows || '<div class="disc-empty">這個範圍內還沒有花費記錄</div>'}
+    </div>
+
+    ${allEntries.length ? `
+    <div class="stats-section">
+      <div class="stats-section-title">依分類比價金額</div>
+      <div class="unit-hint" style="margin-top:-4px;">以下依照比價記錄推算，不是實際花費</div>
+      ${catList.map(([cat, amt]) => `
+        <div class="cat-bar-row">
+          <div class="cat-bar-label">${escapeHtml(cat)}</div>
+          <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.round((amt / maxCat) * 100)}%"></div></div>
+          <div class="cat-bar-amount">NT$${amt}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="stats-section">
+      <div class="stats-section-title">最常記錄的品項</div>
+      ${topItems.map(({ item, count }) => `
+        <div class="stats-list-row">
+          <span class="material-icons item-icon">${escapeHtml(item.icon || 'category')}</span>
+          <span class="stats-list-name">${escapeHtml(item.name)}</span>
+          <span class="stats-list-count">${count} 筆</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="stats-section">
+      <div class="stats-section-title">常光顧的店家</div>
+      ${topStores.map(([store, amt]) => `
+        <div class="stats-list-row">
+          <span class="stats-list-name">${escapeHtml(store)}</span>
+          <span class="stats-list-count">NT$${amt}</span>
+        </div>
+      `).join('')}
+    </div>
+    ` : ''}
+  `;
+}
+
+/* ---------- price trend chart ---------- */
+
+function openChart(itemId) {
+  currentChartItemId = itemId;
+  document.getElementById('chartScreen').style.display = 'flex';
+  renderChartRangeButtons();
+  renderChart();
+}
+
+function closeChart() {
+  document.getElementById('chartScreen').style.display = 'none';
+}
+
+function renderChartRangeButtons() {
+  const wrap = document.getElementById('chartRangeButtons');
+  const ranges = [
+    { key: '7d', label: '一週' },
+    { key: '14d', label: '兩週' },
+    { key: '1m', label: '一個月' },
+    { key: '6m', label: '半年' },
+    { key: 'all', label: '全部' }
+  ];
+  wrap.innerHTML = ranges.map(r => `<button class="range-btn ${currentChartRange === r.key ? 'active' : ''}" onclick="setChartRange('${r.key}')">${r.label}</button>`).join('');
+}
+
+function setChartRange(key) {
+  currentChartRange = key;
+  renderChartRangeButtons();
+  renderChart();
+}
+
+function buildChartSVG(points, widthPx, heightPx) {
+  const padL = 56, padR = 20, padT = 20, padB = 40;
+  const maxPrice = Math.max(...points.map(p => p.price), 0);
+  const niceMax = maxPrice <= 0 ? 10 : Math.ceil((maxPrice * 1.15) / 10) * 10;
+  const innerW = widthPx - padL - padR;
+  const innerH = heightPx - padT - padB;
+  const n = points.length;
+  const stepX = n > 1 ? innerW / (n - 1) : 0;
+
+  function xAt(i) { return n > 1 ? padL + i * stepX : padL + innerW / 2; }
+  function yAt(price) { return padT + innerH - (price / niceMax) * innerH; }
+
+  const ticks = 4;
+  let gridLines = '';
+  let yLabels = '';
+  for (let t = 0; t <= ticks; t++) {
+    const val = Math.round((niceMax * t) / ticks);
+    const y = yAt(val);
+    gridLines += `<line x1="${padL}" y1="${y}" x2="${widthPx - padR}" y2="${y}" stroke="#e2ddcd" stroke-width="1" />`;
+    yLabels += `<text x="${padL - 8}" y="${y + 4}" font-size="11" fill="#706e60" text-anchor="end">NT$${val}</text>`;
+  }
+
+  const axisX = `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${heightPx - padB}" stroke="#2f6e52" stroke-width="1.5" />`;
+  const axisY = `<line x1="${padL}" y1="${heightPx - padB}" x2="${widthPx - padR}" y2="${heightPx - padB}" stroke="#2f6e52" stroke-width="1.5" />`;
+
+  const linePoints = points.map((p, i) => `${xAt(i)},${yAt(p.price)}`).join(' ');
+
+  let dots = '';
+  let xLabels = '';
+  points.forEach((p, i) => {
+    const x = xAt(i);
+    const y = yAt(p.price);
+    const safeStore = String(p.store).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    dots += `<circle cx="${x}" cy="${y}" r="4" fill="#2f6e52"><title>${p.date} ${safeStore}\nNT$${p.price}</title></circle>`;
+    xLabels += `<text x="${x}" y="${heightPx - padB + 18}" font-size="10" fill="#706e60" text-anchor="middle">${p.dateLabel}</text>`;
+  });
+
+  return `<svg width="${widthPx}" height="${heightPx}" xmlns="http://www.w3.org/2000/svg">
+    ${gridLines}
+    ${axisX}${axisY}
+    <polyline points="${linePoints}" fill="none" stroke="#2f6e52" stroke-width="2" />
+    ${dots}
+    ${yLabels}
+    ${xLabels}
+  </svg>`;
+}
+
+function renderChart() {
+  const it = items.find(i => i.id === currentChartItemId);
+  const titleEl = document.getElementById('chartTitle');
+  const area = document.getElementById('chartArea');
+  if (!it) { area.innerHTML = ''; return; }
+  titleEl.innerHTML = `<span class="material-icons item-icon">${escapeHtml(it.icon || 'category')}</span>${escapeHtml(it.name)}`;
+
+  const now = new Date();
+  let cutoff = null;
+  if (currentChartRange === '7d') cutoff = new Date(now.getTime() - 7 * 86400000);
+  else if (currentChartRange === '14d') cutoff = new Date(now.getTime() - 14 * 86400000);
+  else if (currentChartRange === '1m') cutoff = new Date(now.getTime() - 30 * 86400000);
+  else if (currentChartRange === '6m') cutoff = new Date(now.getTime() - 182 * 86400000);
+
+  let points = (it.entries || [])
+    .filter(e => !cutoff || new Date(e.date) >= cutoff)
+    .map(e => ({ date: e.date, price: e.price, store: e.store }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (points.length === 0) {
+    area.innerHTML = '<div class="chart-empty">這個時間範圍內還沒有價格記錄</div>';
+    return;
+  }
+
+  points = points.map(p => ({ ...p, dateLabel: p.date.slice(5) }));
+
+  const visibleW = Math.max(area.clientWidth || (window.innerWidth - 32), 300);
+  const visibleH = Math.max(area.clientHeight || (window.innerHeight - 170), 260);
+  const spacing = 64;
+  const padTotal = 90;
+  const neededW = padTotal + Math.max(points.length - 1, 0) * spacing;
+  const svgW = Math.max(visibleW, neededW);
+
+  area.innerHTML = buildChartSVG(points, svgW, visibleH);
+}
+
+/* ---------- main render ---------- */
+
+function render() {
+  const list = document.getElementById('itemList');
+  const empty = document.getElementById('emptyState');
+  if (!loaded) return;
+
+  renderFilterRow();
+
+  const collapseBtn = document.getElementById('collapseAllBtn');
+  if (collapseBtn) {
+    const anyOpen = items.some(it => it.open);
+    collapseBtn.textContent = anyOpen ? '全部收合' : '全部展開';
+  }
+
+  const allStores = [...new Set(items.flatMap(it => it.entries.map(e => e.store)))];
+  const datalist = document.getElementById('allStores');
+  if (datalist) {
+    datalist.innerHTML = allStores.map(s => `<option value="${escapeHtml(s)}">`).join('');
+  }
+
+  let itemsToShow = currentFilter === 'all'
+    ? items
+    : items.filter(it => (it.category || '其他') === currentFilter);
+
+  if (searchQuery.trim()) {
+    const q = searchQuery.trim().toLowerCase();
+    itemsToShow = itemsToShow.filter(it => it.name.toLowerCase().includes(q));
+  }
+
+  if (sortMode === 'name') {
+    itemsToShow = [...itemsToShow].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+  } else if (sortMode === 'price') {
+    itemsToShow = [...itemsToShow].sort((a, b) => itemMinPrice(a) - itemMinPrice(b));
+  } else if (sortMode === 'updated') {
+    itemsToShow = [...itemsToShow].sort((a, b) => itemLatestDate(b).localeCompare(itemLatestDate(a)));
+  }
+
+  if (items.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    empty.textContent = '還沒有任何品項，先新增一個吧！';
+    return;
+  }
+  if (itemsToShow.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    empty.textContent = '找不到符合的品項';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = itemsToShow.map(it => {
+    const sorted = [...it.entries].sort((a, b) => effectivePrice(a) - effectivePrice(b));
+    const minPrice = sorted.length ? effectivePrice(sorted[0]) : null;
+    const bestStore = sorted.length ? sorted[0].store : null;
+    const { bestIds, bestByUnit } = analyzeEntries(it.entries);
+
+    const rows = [...it.entries]
+      .sort((a, b) => effectivePrice(a) - effectivePrice(b))
+      .map(e => {
+        const ad = activeDiscount(e);
+        const priceCell = ad
+          ? `<del class="orig">$${e.price}</del>$${discountPrice(e.price, ad)} <span class="disc-tag">${discountLabel(ad)}</span>`
+          : `$${e.price}`;
+        const up = unitPriceOf(e);
+        const isBest = bestIds.has(e.id);
+        const upCell = up !== null
+          ? `<span class="unit-price ${isBest ? 'best' : ''}">$${up.toFixed(2)}/${escapeHtml(e.unit ? e.unit.trim() : '單位')}</span>`
+          : '<span class="unit-price">-</span>';
+        const discCount = (e.discounts || []).length;
+        const storePromo = storeActivePromo(e.store);
+        const promoBadge = storePromo ? `<span class="promo-badge" title="${escapeHtml(promoLabel(storePromo))}">🏷️優惠</span>` : '';
+
+        let rowHtml = `
+        <tr class="${isBest ? 'cheapest' : ''}">
+          <td class="store">
+            ${e.brand ? `<div class="brand-label">${escapeHtml(e.brand)}</div>` : ''}
+            ${escapeHtml(e.store)}<span class="channel-tag">${e.channel === '線上通路' ? '🌐線上' : '🏬門市'}</span>${promoBadge}
+            ${e.note ? `<div class="note-label">📝 ${escapeHtml(e.note)}</div>` : ''}
+          </td>
+          <td class="price">${priceCell}</td>
+          <td>${upCell}</td>
+          <td>${e.date}</td>
+          <td>
+            <button class="mini" onclick="event.stopPropagation(); startEditEntry('${it.id}','${e.id}')">改</button>
+            <button class="mini" onclick="event.stopPropagation(); toggleDiscountPanel('${it.id}','${e.id}')">折扣${discCount ? '(' + discCount + ')' : ''}</button>
+            <button class="del-btn" onclick="event.stopPropagation(); deleteEntry('${it.id}','${e.id}')">✕</button>
+          </td>
+        </tr>`;
+        if (e.discountOpen) {
+          rowHtml += `<tr><td colspan="5">${discountPanelHtml(it, e)}</td></tr>`;
+        }
+        return rowHtml;
+      }).join('');
+
+    const unitBestLines = Object.entries(bestByUnit)
+      .map(([label, info]) => `<div class="best-line">換算後最划算（每${escapeHtml(label)}）：<b>$${info.unitPrice.toFixed(2)}</b>（${escapeHtml(info.store)}）</div>`)
+      .join('');
+
+    const nameArea = it.editingItem ? `
+        <div class="item-edit-row" onclick="event.stopPropagation()">
+          <div class="icon-picker-wrap">
+            <button type="button" class="icon-picker-btn" onclick="toggleIconPicker('${it.id}')">
+              <span class="material-icons" id="editIconPreview-${it.id}">${escapeHtml(it.icon || 'category')}</span>
+            </button>
+            <div class="icon-picker-panel" id="iconPickerPanel-${it.id}"></div>
+          </div>
+          <input id="editName-${it.id}" type="text" value="${escapeHtml(it.name)}">
+          <select id="editCategory-${it.id}">${CATEGORIES.map(c => `<option value="${c}" ${c === it.category ? 'selected' : ''}>${c}</option>`).join('')}</select>
+          <button class="small" onclick="saveItemEdit('${it.id}')">儲存</button>
+          <button class="small ghost" onclick="cancelItemEdit('${it.id}')">取消</button>
+        </div>
+      ` : `
+        <div class="item-name"><span class="material-icons item-icon">${escapeHtml(it.icon || 'category')}</span>${escapeHtml(it.name)}<span class="category-badge">${escapeHtml(it.category || '其他')}</span></div>
+        ${minPrice !== null
+          ? `<div class="item-best">目前最低價：<b>$${minPrice}</b>（${escapeHtml(bestStore)}）</div>`
+          : `<div class="item-best" style="color:var(--sub);">還沒有價格記錄</div>`}
+        ${unitBestLines}
+      `;
+
+    return `
+      <div class="item-card ${it.open ? 'open' : ''}">
+        <div class="item-head" onclick="toggleOpen('${it.id}')">
+          <div class="item-name-wrap">${nameArea}</div>
+          <div class="item-actions">
+            <button class="del-btn" onclick="event.stopPropagation(); startItemEdit('${it.id}')" title="編輯品項"><span class="material-icons">edit</span></button>
+            <button class="del-btn" onclick="event.stopPropagation(); openChart('${it.id}')" title="價格走勢"><span class="material-icons">show_chart</span></button>
+            <button class="del-btn" onclick="event.stopPropagation(); deleteItem('${it.id}')" title="刪除品項">🗑</button>
+            <span class="chevron">▾</span>
+          </div>
+        </div>
+        <div class="item-body">
+          <div class="entry-row">
+            <input id="store-${it.id}" type="text" placeholder="店家名稱（打過的會自動提示）" list="allStores">
+            <select id="channel-${it.id}" class="channel-select">
+              <option value="實體店面">🏬 實體店面</option>
+              <option value="線上通路">🌐 線上通路</option>
+            </select>
+          </div>
+          <div class="entry-row">
+            <input id="price-${it.id}" class="price" type="text" inputmode="numeric" pattern="[0-9]*" oninput="intOnly(this)" placeholder="價格">
+            <button class="small add-entry-btn" onclick="addEntry('${it.id}')">${it.editingEntryId ? '更新' : '加入'}</button>
+            ${it.editingEntryId ? `<button class="small ghost" onclick="cancelEditEntry('${it.id}')">取消編輯</button>` : ''}
+          </div>
+          <button type="button" class="advanced-toggle" onclick="toggleAdvanced('${it.id}')">${it.advancedOpen ? '▴ 收合進階選項' : '▾ 進階選項（牌子・數量單位・備註）'}</button>
+          ${it.advancedOpen ? `
+            <div class="advanced-fields">
+              <div class="entry-row">
+                <input id="brand-${it.id}" type="text" placeholder="牌子名稱（例如：舒潔、五月花）">
+              </div>
+              <div class="entry-row">
+                <input id="qty-${it.id}" class="qty-input" type="text" inputmode="numeric" pattern="[0-9]*" oninput="intOnly(this)" placeholder="數量">
+                <input id="unit-${it.id}" class="unit-input" type="text" placeholder="單位，如 抽/ml/g">
+              </div>
+              <div class="entry-row">
+                <input id="note-${it.id}" type="text" placeholder="備註（例如：口味、規格、心得）">
+              </div>
+              <div class="unit-hint">數量+單位可不填；填了才能自動換算「每抽/每100ml多少錢」</div>
+            </div>
+          ` : ''}
+          ${it.entries.length ? `
+            <table>
+              <thead><tr><th>店家</th><th>價格</th><th>換算單價</th><th>日期</th><th>操作</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('newItemInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addItem();
+});
+document.getElementById('newStoreInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addStore();
+});
+
 loadData();
 </script>
 </body>
