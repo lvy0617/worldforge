@@ -1503,6 +1503,8 @@ function _renderWorldSearch(){
   }).join('');
   setTimeout(()=>sr.querySelectorAll('textarea').forEach(ta=>autoResizeTA(ta)),0);
 }
+
+
 /* NOVEL MANAGEMENT */
 function renderNovelSwitcher(){
   const wrap=document.getElementById('novel-switcher');if(!wrap)return;
@@ -1512,386 +1514,363 @@ function renderNovelSwitcher(){
       <button class="novel-tab-edit" onclick="event.stopPropagation();editNovel('${n.id}')" title="編輯">✏</button>
     </div>
   `).join('');
-  // update datalist for works in char modal
   const dl=document.getElementById('c-works-list');
   if(dl)dl.innerHTML=novels.map(n=>`<option value="${esc(n.name)}">`).join('');
 }
 function switchNovel(id){
   if(id===curNovelId)return;
-  // save current novel data first
   if(curChapId)saveChapterContent();
   save();
-  // switch to new novel
   curNovelId=id;
   localStorage.setItem('wf6-cur-novel',id);
-  // load new novel data
-  S.relations=[];S.mapPins=[];S.timeline=[];S.plot=[];S.novelChars=[];S.chapters=[];S.nodePos={};
+  S.relations=[];S.mapPins=[];S.timeline=[];S.plot=[];S.novelChars=[];S.chapters=[];S.nodePos={};S.world={};
   curChapId=null;
   const novelKey='wf6-novel-'+id;
-  try{
-    const d=localStorage.getItem(novelKey);
-    if(d){const nd=JSON.parse(d);S.relations=nd.relations||[];S.mapPins=nd.mapPins||[];S.timeline=nd.timeline||[];S.plot=nd.plot||[];S.novelChars=nd.novelChars||[];S.chapters=nd.chapters||[];S.nodePos=nd.nodePos||{};S.world=nd.world||{};}
-  }catch(e){}
+  try{const d=localStorage.getItem(novelKey);if(d){const nd=JSON.parse(d);S.relations=nd.relations||[];S.mapPins=nd.mapPins||[];S.timeline=nd.timeline||[];S.plot=nd.plot||[];S.novelChars=nd.novelChars||[];S.chapters=nd.chapters||[];S.nodePos=nd.nodePos||{};S.world=nd.world||{};}}catch(e){}
   document.getElementById('prose-editor').value='';
-  renderNovelSwitcher();
+  renderNovelSwitcher();loadWorldForm();
   renderRelList();renderGraph();renderMapPins();renderTimeline();renderPlot();renderNovelCharsList();renderChapList();updateTotalWC();
   applyMapBg();
 }
 function addNovel(){
-  const name=prompt('新小說名稱：','新小說');
-  if(!name||!name.trim())return;
-  const n={id:uid2(),name:name.trim(),created:Date.now()};
-  novels.push(n);
-  save();
-  switchNovel(n.id);
+  const name=prompt('新小說名稱：','新小說');if(!name||!name.trim())return;
+  const n={id:uid2(),name:name.trim(),created:Date.now()};novels.push(n);save();switchNovel(n.id);
 }
 function editNovel(id){
   const n=novels.find(x=>x.id===id);if(!n)return;
-  const name=prompt('修改小說名稱：',n.name);
-  if(!name||!name.trim())return;
-  // Check if delete requested
-  n.name=name.trim();
-  save();renderNovelSwitcher();
+  const name=prompt('修改小說名稱：',n.name);if(!name||!name.trim())return;
+  n.name=name.trim();save();renderNovelSwitcher();
 }
 function deleteNovel(id){
   if(novels.length<=1){alert('至少需要保留一本小說');return;}
   if(!confirm('確定刪除此小說？章節、關係、地圖等資料將一併刪除。'))return;
-  localStorage.removeItem('wf6-novel-'+id);
-  novels=novels.filter(n=>n.id!==id);
-  if(curNovelId===id)switchNovel(novels[0].id);
-  else{save();renderNovelSwitcher();}
+  localStorage.removeItem('wf6-novel-'+id);novels=novels.filter(n=>n.id!==id);
+  if(curNovelId===id)switchNovel(novels[0].id);else{save();renderNovelSwitcher();}
 }
 
-function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
-function showSaved(){
-  const el=document.getElementById('save-time');if(!el)return;
-  const n=new Date();
-  el.textContent=`已儲存 ${n.getHours().toString().padStart(2,'0')}:${n.getMinutes().toString().padStart(2,'0')}`;
-  el.classList.add('saved');setTimeout(()=>el.classList.remove('saved'),3000);
+/* NOVEL CHARS */
+function importCharsToNovel(){
+  if(!S.chars.length){alert('素材庫中尚無角色');return;}
+  const checks=S.chars.map(c=>`<label style="display:flex;align-items:center;gap:.5rem;padding:.28rem 0;cursor:pointer;font-size:.83rem"><input type="checkbox" value="${c.id}" ${S.novelChars.includes(c.id)?'checked':''}> ${esc(c.name)}${c.role?' · '+esc(c.role):''}</label>`).join('');
+  const bg=document.createElement('div');bg.className='mbg open';
+  bg.innerHTML=`<div class="mdl"><h2>選擇要導入的角色</h2><div style="max-height:280px;overflow-y:auto;margin-bottom:.9rem">${checks}</div><div class="mfoot"><button class="btn bg" onclick="this.closest('.mbg').remove()">取消</button><button class="btn bp" id="imp-ok">確認導入</button></div></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('#imp-ok').onclick=()=>{S.novelChars=[...bg.querySelectorAll('input:checked')].map(x=>x.value);save();renderNovelCharsList();renderGraph();bg.remove();};
 }
-function renderAll(){
-  renderChars();renderFav();renderGrid('item');renderGrid('faction');renderGrid('term');
-  loadWorldForm();renderRelList();renderGraph();renderMapPins();
-  renderTimeline();renderPlot();renderNovelCharsList();renderChapList();updateCounts();updateTotalWC();
-  renderNovelSwitcher();
-}
-
-/* COLOR PICKER */
-function buildColorOpts(cid,hid,colors){
-  document.getElementById(cid).innerHTML=colors.map(c=>`<div class="color-opt" data-color="${c}" style="background:${c||'transparent'};${!c?'border:1px dashed var(--bdrm)':''}" onclick="selectColor('${cid}','${hid}','${c}')"></div>`).join('');
-}
-function selectColor(cid,hid,color){
-  document.getElementById(hid).value=color;
-  document.querySelectorAll('#'+cid+' .color-opt').forEach(el=>el.classList.toggle('sel',el.dataset.color===color));
+function renderNovelCharsList(){
+  const list=document.getElementById('novel-chars-list');
+  const imported=S.novelChars.map(id=>S.chars.find(c=>c.id===id)).filter(Boolean);
+  list.innerHTML=imported.map(c=>`<div style="font-size:.73rem;color:var(--t2);padding:.22rem 0;border-bottom:1px solid var(--bdr)">${c.color?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${c.color};margin-right:.35rem;vertical-align:middle"></span>`:''}${esc(c.name)}</div>`).join('')||'<div style="font-size:.7rem;color:var(--t3)">尚未導入</div>';
 }
 
-/* NAV */
-function switchPage(p,el){
-  document.querySelectorAll('.page').forEach(n=>n.classList.remove('active'));
-  document.querySelectorAll('.ps-btn').forEach(n=>n.classList.remove('active'));
-  document.querySelectorAll('.sb-ctx').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
-  document.getElementById('sbctx-'+p).classList.add('active');
-  (el||document.querySelector(`.ps-btn[data-page="${p}"]`)).classList.add('active');
-  if(p==='novel'){renderGraph();renderMapPins();}
+/* QUICK REL */
+function openQuickRelModal(){
+  if(S.chars.length<2){alert('至少需要 2 個角色才能建立關係');return;}
+  const opts=S.chars.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  document.getElementById('qrm-a').innerHTML=opts;document.getElementById('qrm-b').innerHTML=opts;
+  document.getElementById('qrm-desc').value='';document.getElementById('qrm-type').value='neutral';
+  openModal('qrel-modal');
 }
-function libShow(view,el){
-  document.querySelectorAll('.lib-view').forEach(v=>v.style.display='none');
-  document.getElementById('lib-'+view).style.display='block';
-  document.querySelectorAll('#sbctx-library .sb-item').forEach(i=>i.classList.remove('active'));
-  if(el)el.classList.add('active');
-  if(view==='fav')renderFav();
-}
-function novelTab(tab,el){
-  document.querySelectorAll('.ntc').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('#sbctx-novel .sub-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('ntab-'+tab).classList.add('active');
-  el.classList.add('active');
-  if(tab==='relations')setTimeout(renderGraph,50);
-  if(tab==='map')setTimeout(renderMapPins,50);
-}
-function settingsNav(page,el){
-  document.querySelectorAll('.spage').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('#sbctx-settings .sub-tab').forEach(i=>i.classList.remove('active'));
-  document.getElementById('spage-'+page).classList.add('active');el.classList.add('active');
-}
-function charTab(tab,el){
-  document.querySelectorAll('.mtab-pane').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.mtabs .mtab').forEach(b=>b.classList.remove('active'));
-  document.getElementById('ctp-'+tab).classList.add('active');el.classList.add('active');
-  if(tab==='story'){const id=gv('c-edit-id');if(id)renderCharRels(id);}
-}
-function toggleSidebar(){const g=document.getElementById('gsb');const c=g.classList.toggle('collapsed');localStorage.setItem('wf6-sb',c?'1':'0');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-function openModal(id){document.getElementById(id).classList.add('open');}
-
-/* DRAG SORT LIST */
-function makeSortList(container,onReorder){
-  let d=null;const items=()=>[...container.querySelectorAll('[data-sid]')];
-  container.addEventListener('dragstart',e=>{const it=e.target.closest('[data-sid]');if(!it)return;d=it;requestAnimationFrame(()=>it.classList.add('is-drag'));e.dataTransfer.effectAllowed='move';});
-  container.addEventListener('dragend',()=>{if(d)d.classList.remove('is-drag');items().forEach(i=>i.classList.remove('drag-above'));d=null;});
-  container.addEventListener('dragover',e=>{e.preventDefault();const it=e.target.closest('[data-sid]');items().forEach(i=>i.classList.remove('drag-above'));if(it&&it!==d){const b=it.getBoundingClientRect();if(e.clientY<b.top+b.height/2)it.classList.add('drag-above');}});
-  container.addEventListener('drop',e=>{e.preventDefault();const it=e.target.closest('[data-sid]');items().forEach(i=>i.classList.remove('drag-above'));if(!it||!d||it===d)return;const b=it.getBoundingClientRect();if(e.clientY<b.top+b.height/2)container.insertBefore(d,it);else container.insertBefore(d,it.nextSibling);onReorder(items().map(i=>i.dataset.sid));});
+function saveQuickRel(){
+  const a=gv('qrm-a'),b=gv('qrm-b'),desc=document.getElementById('qrm-desc').value.trim();
+  if(!a||!b||a===b){alert('請選擇兩個不同的角色');return;}if(!desc){alert('請輸入關係描述');return;}
+  S.relations.push({id:uid(),a,b,desc,detail:'',rtype:gv('qrm-type')});
+  [a,b].forEach(id=>{if(!S.novelChars.includes(id))S.novelChars.push(id);});
+  save();closeModal('qrel-modal');renderNovelCharsList();renderChars();
 }
 
-/* DRAG SORT GRID */
-function makeSortGrid(gridId,onReorder){
-  const grid=document.getElementById(gridId);if(!grid)return;
-  let d=null;
-  grid.addEventListener('dragstart',e=>{const c=e.target.closest('[data-sid]');if(!c)return;d=c;requestAnimationFrame(()=>c.classList.add('is-drag'));e.dataTransfer.effectAllowed='move';});
-  grid.addEventListener('dragend',()=>{if(d)d.classList.remove('is-drag');grid.querySelectorAll('[data-sid]').forEach(c=>c.classList.remove('drag-over'));d=null;});
-  grid.addEventListener('dragover',e=>{e.preventDefault();const c=e.target.closest('[data-sid]');grid.querySelectorAll('[data-sid]').forEach(x=>x.classList.remove('drag-over'));if(c&&c!==d)c.classList.add('drag-over');});
-  grid.addEventListener('drop',e=>{e.preventDefault();const c=e.target.closest('[data-sid]');grid.querySelectorAll('[data-sid]').forEach(x=>x.classList.remove('drag-over'));if(!c||!d||c===d)return;grid.insertBefore(d,c);onReorder([...grid.querySelectorAll('[data-sid]')].map(x=>x.dataset.sid));});
+/* RELATIONS */
+function openRelModal(){
+  const ic=S.novelChars.map(id=>S.chars.find(c=>c.id===id)).filter(Boolean);
+  if(ic.length<2){alert('請先導入至少 2 個角色');return;}
+  const opts=ic.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  document.getElementById('rm-a').innerHTML=opts;document.getElementById('rm-b').innerHTML=opts;
+  document.getElementById('rm-desc').value='';document.getElementById('rm-detail').value='';document.getElementById('rm-type').value='neutral';
+  openModal('rel-modal');
+}
+function saveRelation(){
+  const a=gv('rm-a'),b=gv('rm-b'),desc=document.getElementById('rm-desc').value.trim();
+  if(!a||!b||a===b){alert('請選擇兩個不同的角色');return;}if(!desc){alert('請輸入關係描述');return;}
+  S.relations.push({id:uid(),a,b,desc,detail:gv('rm-detail'),rtype:gv('rm-type')});
+  save();closeModal('rel-modal');renderRelList();renderGraph();
+}
+function deleteRelation(id){S.relations=S.relations.filter(r=>r.id!==id);save();renderRelList();renderGraph();}
+function renderRelList(){
+  const list=document.getElementById('rel-list');
+  if(!S.relations.length){list.innerHTML='<div style="color:var(--t3);font-size:.78rem;padding:.45rem 0">尚無關係</div>';return;}
+  list.innerHTML=S.relations.map(r=>{
+    const ca=S.chars.find(c=>c.id===r.a),cb=S.chars.find(c=>c.id===r.b);if(!ca||!cb)return'';
+    const col=REL_COLORS[r.rtype||'neutral'];
+    return`<div class="lr" draggable="true" data-sid="${r.id}"><span class="dh">${DH}</span><span style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0;display:inline-block"></span><span style="font-size:.83rem;font-family:'Noto Serif TC',serif">${esc(ca.name)}</span><span style="color:var(--golddim)">⟷</span><span style="font-size:.83rem;font-family:'Noto Serif TC',serif">${esc(cb.name)}</span><span style="color:var(--t3);font-size:.75rem;flex:1">${esc(r.desc)}</span><button class="bi" onclick="deleteRelation('${r.id}')">✕</button></div>`;
+  }).filter(Boolean).join('');
+  makeSortList(list,order=>{S.relations=order.map(id=>S.relations.find(r=>r.id===id)).filter(Boolean);save();});
 }
 
-/* CUSTOM FIELDS */
-function addCFRow(key,val,listId){
-  key=key||'';val=val||'';listId=listId||'cf-list';
-  const row=document.createElement('div');row.className='cfr';row.draggable=true;
-  row.innerHTML=`<span class="dh" style="cursor:grab;color:var(--t3)">${DH}</span><input type="text" class="cfk" placeholder="欄位名稱" value="${ea(key)}"><input type="text" placeholder="內容" value="${ea(val)}"><button class="bi" onclick="this.parentNode.remove()">✕</button>`;
-  attachCFDrag(row);document.getElementById(listId).appendChild(row);
-}
-function ea(s){return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function attachCFDrag(row){
-  row.addEventListener('dragstart',e=>{e.dataTransfer.effectAllowed='move';row.classList.add('is-drag');cfDrag=row;});
-  row.addEventListener('dragend',()=>{row.classList.remove('is-drag');row.parentElement&&row.parentElement.querySelectorAll('.cfr').forEach(r=>r.classList.remove('drag-above'));cfDrag=null;});
-  row.addEventListener('dragover',e=>{e.preventDefault();if(!cfDrag||cfDrag===row)return;row.parentElement.querySelectorAll('.cfr').forEach(r=>r.classList.remove('drag-above'));row.classList.add('drag-above');});
-  row.addEventListener('drop',e=>{e.preventDefault();if(!cfDrag||cfDrag===row)return;row.classList.remove('drag-above');const list=row.parentElement,rows=[...list.querySelectorAll('.cfr')],fi=rows.indexOf(cfDrag),ti=rows.indexOf(row);if(fi<ti)list.insertBefore(cfDrag,row.nextSibling);else list.insertBefore(cfDrag,row);});
-}
-function getCF(listId){
-  listId=listId||'cf-list';
-  return[...document.querySelectorAll('#'+listId+' .cfr')].map(r=>{const ins=r.querySelectorAll('input');return{key:ins[0].value.trim(),value:ins[1].value.trim()};}).filter(f=>f.key);
-}
-
-/* CHARS */
-
-function openCharModal(id){
-  CF.forEach(f=>{const el=document.getElementById('c-'+f);if(el)el.value='';});
-  ['c-gender','c-align','c-blood','c-role-level'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
-  document.getElementById('cf-list').innerHTML='';document.getElementById('c-color').value='';
-  document.querySelectorAll('#char-color-opts .color-opt').forEach(el=>el.classList.remove('sel'));
-  document.getElementById('c-edit-id').value=id||'';
-  document.getElementById('char-modal-title').textContent=id?'編輯角色':'新增角色';
-  document.getElementById('char-del-btn').style.display=id?'':'none';
-  document.getElementById('ctp-char-rels').innerHTML='';
-  initTagsField('');
-  initWorksField('');
-  charTab('basic',document.querySelector('#char-modal .mtab'));
-  if(id){
-    const c=S.chars.find(x=>x.id===id);
-    if(c){
-      CF.forEach(f=>{const el=document.getElementById('c-'+f);if(el)el.value=c[f]||'';});
-      document.getElementById('c-gender').value=c.gender||'';
-      document.getElementById('c-align').value=c.align||'';
-      document.getElementById('c-blood').value=c.blood||'';
-      document.getElementById('c-role-level').value=c.roleLevel||'';
-      (c.customFields||[]).forEach(f=>addCFRow(f.key,f.value,'cf-list'));
-      if(c.color)selectColor('char-color-opts','c-color',c.color);
-      initTagsField(c.tags||'');
-      initWorksField(c.works||'');
-    }
-  }
-  openModal('char-modal');
-}
-function renderCharRels(id){
-  const rels=S.relations.filter(r=>r.a===id||r.b===id);
-  const el=document.getElementById('ctp-char-rels');
-  if(!rels.length){el.innerHTML='<div style="font-size:.75rem;color:var(--t3);margin-top:.5rem">尚無關係記錄</div>';return;}
-  el.innerHTML='<div style="font-size:.72rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem">與其他角色的關係</div>'+
-    rels.map(r=>{
-      const oid=r.a===id?r.b:r.a;const oc=S.chars.find(x=>x.id===oid);if(!oc)return'';
-      const col=REL_COLORS[r.rtype||'neutral'];
-      return`<div style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;padding:.3rem 0;border-bottom:1px solid var(--bdr)">
-        <span style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0;display:inline-block"></span>
-        <span style="font-family:'Noto Serif TC',serif">${esc(oc.name)}</span>
-        <span style="color:var(--t3)">—</span><span style="color:var(--t2)">${esc(r.desc)}</span>
-      </div>`;
-    }).filter(Boolean).join('');
-}
-function saveChar(){
-  const name=document.getElementById('c-name').value.trim();if(!name){alert('請輸入角色姓名');return;}
-  const eid=document.getElementById('c-edit-id').value;
-  const c={id:eid||uid(),name};
-  ['alias','age','height','weight','role','faction','appearance','personality','backstory','skills','motivation','notes','birthday','tags'].forEach(f=>{const el=document.getElementById('c-'+f);c[f]=el?el.value.trim():'';});
-  c.gender=gv('c-gender');c.align=gv('c-align');c.blood=gv('c-blood');c.roleLevel=gv('c-role-level');
-  c.color=gv('c-color');c.fav=eid?(S.chars.find(x=>x.id===eid)||{}).fav||false:false;
-  c.customFields=getCF('cf-list');
-  if(eid){const i=S.chars.findIndex(x=>x.id===eid);if(i>=0)S.chars[i]=c;else S.chars.push(c);}else S.chars.push(c);
-  save();closeModal('char-modal');renderChars();updateCounts();renderCharTagFilter();
-}
-function deleteChar(){
-  const id=gv('c-edit-id');if(!confirm('確定刪除此角色？'))return;
-  S.chars=S.chars.filter(c=>c.id!==id);S.relations=S.relations.filter(r=>r.a!==id&&r.b!==id);
-  S.novelChars=S.novelChars.filter(x=>x!==id);delete S.nodePos[id];
-  save();closeModal('char-modal');renderChars();updateCounts();renderGraph();renderNovelCharsList();renderCharTagFilter();
-}
-function toggleFav(id,e){
-  e.stopPropagation();const c=S.chars.find(x=>x.id===id);if(!c)return;
-  c.fav=!c.fav;save();renderChars();renderFav();updateCounts();
-}
-function renderCharTagFilter(){
-  const allTags=new Set();
-  S.chars.forEach(c=>{
-    if(c.tags)c.tags.split(',').map(t=>t.trim()).filter(Boolean).forEach(t=>allTags.add(t));
-    if(c.roleLevel)allTags.add(c.roleLevel);
+/* GRAPH */
+function renderGraph(){
+  const canvas=document.getElementById('rel-canvas'),svg=document.getElementById('rel-svg'),empty=document.getElementById('rel-empty');
+  canvas.querySelectorAll('.rnode,.redge-lbl').forEach(el=>el.remove());svg.innerHTML='';
+  const chars=S.novelChars.map(id=>S.chars.find(c=>c.id===id)).filter(Boolean);
+  if(!chars.length){empty.style.display='flex';return;}empty.style.display='none';
+  const W=canvas.clientWidth||620,H=canvas.clientHeight||420,cx=W/2,cy=H/2,rad=Math.min(W,H)*.31;
+  chars.forEach((c,i)=>{if(!S.nodePos[c.id]){const a=(i/chars.length)*2*Math.PI-Math.PI/2;S.nodePos[c.id]={x:cx+rad*Math.cos(a),y:cy+rad*Math.sin(a)};}});
+  S.relations.forEach(r=>{
+    const pa=S.nodePos[r.a],pb=S.nodePos[r.b];if(!pa||!pb)return;
+    const col=REL_COLORS[r.rtype||'neutral'];
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',pa.x);line.setAttribute('y1',pa.y);line.setAttribute('x2',pb.x);line.setAttribute('y2',pb.y);
+    line.setAttribute('stroke',col);line.setAttribute('stroke-width','1.8');line.setAttribute('stroke-dasharray','5 3');line.setAttribute('opacity','.65');
+    svg.appendChild(line);
+    const lbl=document.createElement('div');lbl.className='redge-lbl';
+    lbl.style.left=(pa.x+pb.x)/2+'px';lbl.style.top=(pa.y+pb.y)/2+'px';lbl.textContent=r.desc;
+    canvas.appendChild(lbl);
   });
-  const f=document.getElementById('char-tag-filter');
-  if(!allTags.size){f.innerHTML='';return;}
-  const hasFilter=charTagFilter.size>0;
-  f.innerHTML=(hasFilter?`<div class="tfc on" onclick="charTagFilter.clear();renderCharTagFilter();renderChars()">✕ 清除篩選</div>`:'')
-    +[...allTags].map(t=>`<div class="tfc${charTagFilter.has(t)?' on':''}" onclick="setCharTagFilter('${ea(t)}')">${esc(t)}</div>`).join('');
+  chars.forEach(c=>{
+    const p=S.nodePos[c.id];
+    const nd=document.createElement('div');nd.className='rnode';nd.dataset.id=c.id;
+    nd.style.left=p.x+'px';nd.style.top=p.y+'px';nd.textContent=c.name;
+    nd.style.setProperty('--node-color',c.color||'var(--gold)');
+    nd.addEventListener('mousedown',startNodeDrag);
+    canvas.appendChild(nd);
+  });
 }
-function setCharTagFilter(t){
-  if(charTagFilter.has(t))charTagFilter.delete(t);
-  else charTagFilter.add(t);
-  renderCharTagFilter();renderChars();
+function onNodeHover(e){
+  const nd=e.target.closest('.rnode');if(!nd)return;
+  const c=S.chars.find(x=>x.id===nd.dataset.id);if(!c)return;
+  const rels=S.relations.filter(r=>r.a===c.id||r.b===c.id).map(r=>{const oid=r.a===c.id?r.b:r.a;const oc=S.chars.find(x=>x.id===oid);return oc?esc(oc.name)+': '+esc(r.desc):'';}).filter(Boolean);
+  const popup=document.getElementById('node-popup');
+  popup.innerHTML=`<h3>${esc(c.name)}</h3>${c.role?`<p style="color:var(--golddim);font-size:.68rem;margin-bottom:.25rem">${esc(c.role)}${c.faction?' · '+esc(c.faction):''}</p>`:''}${c.personality?`<p>${esc(c.personality.slice(0,80))}${c.personality.length>80?'…':''}</p>`:''}${rels.length?`<div class="np-rels">🔗 ${rels.slice(0,3).join('、')}${rels.length>3?'…':''}</div>`:''}`;
+  const x=parseFloat(nd.style.left),y=parseFloat(nd.style.top),cw=canvas.clientWidth;
+  popup.style.left=Math.min(x+36,cw-190)+'px';popup.style.top=Math.max(y-90,8)+'px';popup.style.display='block';
 }
-/* TAG CHIP UI */
-function getTagsArr(){
-  return (document.getElementById('c-tags').value||'').split(',').map(t=>t.trim()).filter(Boolean);
+function onNodeOut(e){if(!e.relatedTarget||!e.relatedTarget.closest('.rnode'))document.getElementById('node-popup').style.display='none';}
+let _nd=null,_noff={x:0,y:0};
+function startNodeDrag(e){_nd=e.currentTarget;const p=S.nodePos[_nd.dataset.id],rect=_nd.parentElement.getBoundingClientRect();_noff.x=e.clientX-rect.left-p.x;_noff.y=e.clientY-rect.top-p.y;_nd.style.cursor='grabbing';document.addEventListener('mousemove',onNodeDrag);document.addEventListener('mouseup',stopNodeDrag);}
+function onNodeDrag(e){
+  if(!_nd)return;
+  const canvas=document.getElementById('rel-canvas'),rect=canvas.getBoundingClientRect();
+  const x=Math.max(31,Math.min(rect.width-31,e.clientX-rect.left-_noff.x));
+  const y=Math.max(31,Math.min(rect.height-31,e.clientY-rect.top-_noff.y));
+  S.nodePos[_nd.dataset.id]={x,y};_nd.style.left=x+'px';_nd.style.top=y+'px';
+  const svg=document.getElementById('rel-svg'),lines=[...svg.querySelectorAll('line')];
+  const lbls=[...document.getElementById('rel-canvas').querySelectorAll('.redge-lbl')];
+  S.relations.forEach((r,i)=>{const pa=S.nodePos[r.a],pb=S.nodePos[r.b];if(!pa||!pb)return;const line=lines[i];if(!line)return;line.setAttribute('x1',pa.x);line.setAttribute('y1',pa.y);line.setAttribute('x2',pb.x);line.setAttribute('y2',pb.y);if(lbls[i]){lbls[i].style.left=(pa.x+pb.x)/2+'px';lbls[i].style.top=(pa.y+pb.y)/2+'px';}});
 }
-function setTagsArr(arr){
-  document.getElementById('c-tags').value=arr.join(',');
-  renderTagChips();
+function stopNodeDrag(){if(_nd)_nd.style.cursor='grab';_nd=null;document.removeEventListener('mousemove',onNodeDrag);document.removeEventListener('mouseup',stopNodeDrag);}
+
+/* MAP */
+function loadMapBg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const key='mapbg-'+(curNovelId||'default');idbSet(key,ev.target.result).then(()=>{applyMapBg();}).catch(()=>{alert('底圖儲存失敗，建議使用較小的圖片（< 1MB）');});};r.readAsDataURL(f);}
+function applyMapBg(){const img=document.getElementById('map-bg-img');if(!img)return;const key='mapbg-'+(curNovelId||'default');idbGet(key).then(data=>{if(data){img.src=data;img.style.display='block';}else{img.style.display='none';}}).catch(()=>img.style.display='none');}
+function clearMapBg(){const key='mapbg-'+(curNovelId||'default');idbDel(key).then(()=>{const img=document.getElementById('map-bg-img');if(img){img.src='';img.style.display='none';}});}
+function handleMapClick(e){
+  if(e.target.closest('.mpin')||e.target.id==='map-bg-img'||e.target.closest('.pin-popup'))return;
+  document.getElementById('pin-popup').style.display='none';
+  const rect=e.currentTarget.getBoundingClientRect();
+  document.getElementById('mp-x').value=((e.clientX-rect.left)/rect.width*100).toFixed(2);
+  document.getElementById('mp-y').value=((e.clientY-rect.top)/rect.height*100).toFixed(2);
+  document.getElementById('mp-name').value='';document.getElementById('mp-type').value='城市';document.getElementById('mp-desc').value='';
+  document.getElementById('mp-color').value='';document.getElementById('mp-edit-id').value='';
+  document.querySelectorAll('#pin-color-opts .color-opt').forEach(el=>el.classList.remove('sel'));
+  document.getElementById('mp-save-btn').textContent='新增地點';document.getElementById('mp-del-btn').style.display='none';
+  openModal('map-modal');
 }
-function renderTagChips(){
-  const wrap=document.getElementById('c-tags-wrap');if(!wrap)return;
-  const arr=getTagsArr();
-  wrap.innerHTML=arr.map((t,i)=>`<span class="tag-chip">${esc(t)}<button type="button" onclick="removeTag(${i})">✕</button></span>`).join('');
+function addMapPin(){document.getElementById('mp-x').value=50;document.getElementById('mp-y').value=50;document.getElementById('mp-name').value='';document.getElementById('mp-edit-id').value='';document.getElementById('mp-save-btn').textContent='新增地點';document.getElementById('mp-del-btn').style.display='none';openModal('map-modal');}
+function onPinHover(e){
+  const pin=e.target.closest('.mpin');if(!pin)return;
+  const p=S.mapPins.find(x=>x.id===pin.dataset.id);if(!p)return;
+  const popup=document.getElementById('pin-popup');
+  popup.innerHTML=`<div class="pt">${p.type}</div><h3>${esc(p.name)}</h3>${p.desc?`<p>${esc(p.desc)}</p>`:''}<div class="pp-act"><button class="btn bg bs" onclick="editMapPin('${p.id}')">✏️ 編輯</button><button class="btn bd bs" onclick="deleteMapPin('${p.id}');document.getElementById('pin-popup').style.display='none'">🗑</button></div>`;
+  popup.style.left=pin.style.left;popup.style.top=pin.style.top;popup.style.display='block';
 }
-function addTagFromInput(e){
-  if(e&&e.type==='keydown'&&e.key!=='Enter')return;
-  if(e&&e.type==='keydown')e.preventDefault();
-  const input=document.getElementById('c-tags-input');
-  const val=input.value.trim();
-  if(!val)return;
-  const arr=getTagsArr();
-  if(!arr.includes(val)){arr.push(val);setTagsArr(arr);}
-  input.value='';
+function onPinOut(e){if(!e.relatedTarget||!e.relatedTarget.closest('.pin-popup,.mpin'))document.getElementById('pin-popup').style.display='none';}
+function editMapPin(id){
+  const p=S.mapPins.find(x=>x.id===id);if(!p)return;
+  document.getElementById('mp-x').value=p.x;document.getElementById('mp-y').value=p.y;
+  document.getElementById('mp-name').value=p.name;document.getElementById('mp-type').value=p.type||'城市';
+  document.getElementById('mp-desc').value=p.desc||'';document.getElementById('mp-edit-id').value=id;
+  document.getElementById('mp-color').value=p.color||'';
+  document.querySelectorAll('#pin-color-opts .color-opt').forEach(el=>el.classList.toggle('sel',el.dataset.color===(p.color||'')));
+  document.getElementById('mp-save-btn').textContent='儲存地點';document.getElementById('mp-del-btn').style.display='';
+  document.getElementById('pin-popup').style.display='none';openModal('map-modal');
 }
-function removeTag(idx){
-  const arr=getTagsArr();arr.splice(idx,1);setTagsArr(arr);
+function saveMapPin(){
+  const name=document.getElementById('mp-name').value.trim();if(!name){alert('請輸入地點名稱');return;}
+  const eid=gv('mp-edit-id');
+  const pin={id:eid||uid(),name,type:gv('mp-type'),desc:gv('mp-desc'),color:gv('mp-color'),x:+gv('mp-x'),y:+gv('mp-y')};
+  if(eid){const i=S.mapPins.findIndex(x=>x.id===eid);if(i>=0)S.mapPins[i]=pin;else S.mapPins.push(pin);}else S.mapPins.push(pin);
+  save();closeModal('map-modal');renderMapPins();
 }
-function initTagsField(tagsStr){
-  document.getElementById('c-tags').value=tagsStr||'';
-  document.getElementById('c-tags-input').value='';
-  renderTagChips();
+function deleteMapPin(id){S.mapPins=S.mapPins.filter(p=>p.id!==id);save();renderMapPins();}
+function deleteMapPinFromModal(){const id=gv('mp-edit-id');if(!id||!confirm('確定刪除？'))return;deleteMapPin(id);closeModal('map-modal');}
+function clearMap(){if(confirm('清空地圖所有地點？')){S.mapPins=[];save();renderMapPins();}}
+function renderMapPins(){
+  const canvas=document.getElementById('map-canvas');canvas.querySelectorAll('.mpin').forEach(el=>el.remove());applyMapBg();
+  document.getElementById('map-empty').style.display=S.mapPins.length?'none':'flex';
+  S.mapPins.forEach(p=>{const pin=document.createElement('div');pin.className='mpin';pin.style.left=p.x+'%';pin.style.top=p.y+'%';pin.dataset.id=p.id;pin.innerHTML=`<div class="mpin-dot" style="--pin-color:${p.color||'var(--gold)'}"></div><div class="mpin-lbl">${esc(p.name)}</div>`;canvas.appendChild(pin);});
+  const list=document.getElementById('map-pins-list');
+  list.innerHTML=S.mapPins.map(p=>`<div class="lr" draggable="true" data-sid="${p.id}"><span class="dh">${DH}</span><span style="color:${p.color||'var(--gold)'};font-size:.78rem">📍</span><span style="font-family:'Noto Serif TC',serif;font-size:.83rem">${esc(p.name)}</span><span style="color:var(--t3);font-size:.7rem">${p.type}</span>${p.desc?`<span style="color:var(--t2);font-size:.73rem;flex:1">${esc(p.desc)}</span>`:'<span style="flex:1"></span>'}<button class="bi" onclick="editMapPin('${p.id}')">✏</button><button class="bi" onclick="deleteMapPin('${p.id}')">✕</button></div>`).join('');
+  makeSortList(list,order=>{S.mapPins=order.map(id=>S.mapPins.find(p=>p.id===id)).filter(Boolean);save();});
 }
 
-/* WORKS CHIP UI */
-function getWorksArr(){
-  return (document.getElementById('c-works').value||'').split(',').map(t=>t.trim()).filter(Boolean);
+/* TIMELINE */
+function renderTLFilter(){document.getElementById('tl-filter').innerHTML=TL_TYPES.map(t=>`<div class="tf-chip${t===tlFilter?' active':''}" onclick="setTLFilter('${t}')">${t}</div>`).join('');}
+function setTLFilter(t){tlFilter=t;renderTLFilter();renderTimeline();}
+function openTLModal(id){
+  document.getElementById('tl-edit-id').value=id||'';document.getElementById('tl-title').textContent=id?'編輯事件':'新增事件';document.getElementById('tl-del-btn').style.display=id?'':'none';
+  document.getElementById('tl-date').value='';document.getElementById('tl-name').value='';document.getElementById('tl-desc').value='';document.getElementById('tl-type').value='歷史';document.getElementById('tl-chars').value='';
+  if(id){const ev=S.timeline.find(x=>x.id===id);if(ev){document.getElementById('tl-date').value=ev.date||'';document.getElementById('tl-name').value=ev.title||'';document.getElementById('tl-desc').value=ev.desc||'';document.getElementById('tl-type').value=ev.type||'歷史';document.getElementById('tl-chars').value=ev.chars||'';}}
+  openModal('tl-modal');
 }
-function setWorksArr(arr){
-  document.getElementById('c-works').value=arr.join(',');
-  renderWorkChips();
+function saveTL(){
+  const title=document.getElementById('tl-name').value.trim();if(!title){alert('請輸入事件標題');return;}
+  const eid=gv('tl-edit-id');const ev={id:eid||uid(),date:gv('tl-date'),title,desc:gv('tl-desc'),type:gv('tl-type'),chars:gv('tl-chars')};
+  if(eid){const i=S.timeline.findIndex(x=>x.id===eid);if(i>=0)S.timeline[i]=ev;else S.timeline.push(ev);}else S.timeline.push(ev);
+  save();closeModal('tl-modal');renderTimeline();renderTLFilter();
 }
-function renderWorkChips(){
-  const wrap=document.getElementById('c-works-wrap');if(!wrap)return;
-  const arr=getWorksArr();
-  wrap.innerHTML=arr.map((t,i)=>`<span class="tag-chip" style="background:rgba(122,63,160,.1);border-color:rgba(122,63,160,.3);color:#9a63c0">${esc(t)}<button type="button" onclick="removeWork(${i})">✕</button></span>`).join('');
-  // update datalist
-  const dl=document.getElementById('c-works-list');
-  if(dl)dl.innerHTML=novels.map(n=>`<option value="${esc(n.name)}">`).join('');
-}
-function addWorkFromInput(e){
-  if(e&&e.type==='keydown'&&e.key!=='Enter')return;
-  if(e&&e.type==='keydown')e.preventDefault();
-  const input=document.getElementById('c-works-input');
-  const val=input.value.trim();
-  if(!val)return;
-  const arr=getWorksArr();
-  if(!arr.includes(val)){arr.push(val);setWorksArr(arr);}
-  input.value='';
-}
-function removeWork(idx){
-  const arr=getWorksArr();arr.splice(idx,1);setWorksArr(arr);
-}
-function initWorksField(worksStr){
-  document.getElementById('c-works').value=worksStr||'';
-  document.getElementById('c-works-input').value='';
-  renderWorkChips();
-}
-
-function renderChars(){
-  const grid=document.getElementById('char-grid');
-  const q=(document.getElementById('char-search')||{}).value||'';
-  let arr=S.chars;
-  if(q){const lq=q.toLowerCase();arr=arr.filter(c=>[c.name,c.alias,c.role,c.faction,c.personality,c.tags,c.roleLevel].some(v=>v&&v.toLowerCase().includes(lq)));}
-  if(charTagFilter.size>0){arr=arr.filter(c=>{const tags=(c.tags||'').split(',').map(t=>t.trim());return[...charTagFilter].every(f=>tags.includes(f)||c.roleLevel===f);});}
-  if(!arr.length){grid.innerHTML=q||charTagFilter.size>0?'<div class="empty">無符合結果</div>':'<div class="empty">尚無角色<br>點擊右上角開始建立</div>';return;}
-  grid.innerHTML=arr.map(c=>{
-    const rels=S.relations.filter(r=>r.a===c.id||r.b===c.id);
-    const tagArr=(c.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-    return`<div class="cc" draggable="true" data-sid="${c.id}" onclick="openCharModal('${c.id}')" style="--cc-color:${c.color||'var(--gold)'}">
-      <span class="cc-dh dh" onclick="event.stopPropagation()" style="position:absolute;right:1.8rem;top:.45rem">${DH}</span>
-      <span class="cc-fav${c.fav?' on':''}" onclick="toggleFav('${c.id}',event)">★</span>
-      <div class="cc-name">${esc(c.name)}${c.alias?` <span style="font-weight:400;opacity:.55;font-size:.78rem">· ${esc(c.alias)}</span>`:''}</div>
-      <div class="cc-sub">${esc([c.roleLevel,c.role,c.faction].filter(Boolean).join(' · '))||'&ensp;'}</div>
-      <div class="tags">
-        ${c.align?`<span class="tag ${c.align==='正派'?'t':c.align==='反派'?'r':''}">${c.align}</span>`:''}
-        ${c.gender?`<span class="tag">${c.gender}</span>`:''}
-        ${c.age?`<span class="tag">${c.age}歲</span>`:''}
-        ${c.blood?`<span class="tag">${c.blood}型</span>`:''}
-        ${c.birthday?`<span class="tag">🎂${c.birthday}</span>`:''}
-        ${tagArr.map(t=>`<span class="tag b">${esc(t)}</span>`).join('')}
-        ${c.works?c.works.split(',').map(w=>w.trim()).filter(Boolean).map(w=>`<span class="tag" style="border-color:rgba(122,63,160,.3);color:#9a63c0;background:rgba(122,63,160,.06)">📖${esc(w)}</span>`).join(''):''}
-      </div>
-      ${c.personality?`<div class="cc-ex">${esc(c.personality)}</div>`:''}
-      ${rels.length?`<div class="cc-rel-badge">🔗 <span>${rels.length}</span> 段關係</div>`:''}
-    </div>`;
+function deleteTL(){const id=gv('tl-edit-id');if(!confirm('確定刪除？'))return;S.timeline=S.timeline.filter(x=>x.id!==id);save();closeModal('tl-modal');renderTimeline();renderTLFilter();}
+function renderTimeline(){
+  renderTLFilter();const list=document.getElementById('timeline-list');
+  let arr=S.timeline;if(tlFilter!=='全部')arr=arr.filter(ev=>ev.type===tlFilter);
+  if(!arr.length){list.innerHTML='<div class="empty">尚無事件</div>';return;}
+  list.innerHTML=arr.map(ev=>{
+    const col=TL_COLORS[ev.type]||'var(--gold)';
+    return`<div class="tle" draggable="true" data-sid="${ev.id}" style="--tl-color:${col}"><span class="dh" onclick="event.stopPropagation()">${DH}</span>
+      <div class="tle-body" onclick="openTLModal('${ev.id}')">
+        <div class="tle-date">${esc(ev.date||'未標記時間')} · <span style="color:${col}">${ev.type}</span></div>
+        <div class="tle-title">${esc(ev.title)}</div>
+        ${ev.desc?`<div class="tle-desc">${esc(ev.desc)}</div>`:''}
+        ${ev.chars?`<div class="tle-chars">👥 <span>${esc(ev.chars)}</span></div>`:''}
+      </div></div>`;
   }).join('');
-  if(!q&&charTagFilter.size===0)makeSortGrid('char-grid',order=>{S.chars=order.map(id=>S.chars.find(c=>c.id===id)).filter(Boolean);save();});
-  renderCharTagFilter();
+  makeSortList(list,order=>{const sorted=order.map(id=>S.timeline.find(e=>e.id===id)).filter(Boolean);const rest=S.timeline.filter(e=>!sorted.find(s=>s.id===e.id));S.timeline=[...sorted,...rest];save();});
 }
-function renderFav(){
-  const grid=document.getElementById('fav-grid');const arr=S.chars.filter(c=>c.fav);
-  if(!arr.length){grid.innerHTML='<div class="empty">尚無收藏角色<br>在角色卡右上角點擊 ★ 收藏</div>';return;}
-  grid.innerHTML=arr.map(c=>`<div class="cc" data-sid="${c.id}" onclick="openCharModal('${c.id}')" style="--cc-color:${c.color||'var(--gold)'}">
-    <span class="cc-fav on" onclick="toggleFav('${c.id}',event)">★</span>
-    <div class="cc-name">${esc(c.name)}</div>
-    <div class="cc-sub">${esc([c.roleLevel,c.role,c.faction].filter(Boolean).join(' · '))||'&ensp;'}</div>
-    ${c.birthday?`<div style="font-size:.68rem;color:var(--t3);margin-top:.3rem">🎂 ${esc(c.birthday)}</div>`:''}
+
+/* PLOT */
+function openPlotModal(id){
+  document.getElementById('pm-edit-id').value=id||'';document.getElementById('pm-title').textContent=id?'編輯劇情卡':'新增劇情卡';document.getElementById('pm-del-btn').style.display=id?'':'none';
+  ['pm-name','pm-desc','pm-chars','pm-due'].forEach(x=>document.getElementById(x).value='');
+  ['pm-target','pm-wc'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('pm-lane').value='idea';document.getElementById('pm-prio').value='';
+  if(id){const p=S.plot.find(x=>x.id===id);if(p){document.getElementById('pm-name').value=p.title||'';document.getElementById('pm-desc').value=p.desc||'';document.getElementById('pm-chars').value=p.chars||'';document.getElementById('pm-lane').value=p.lane||'idea';document.getElementById('pm-prio').value=p.prio||'';document.getElementById('pm-target').value=p.target||'';document.getElementById('pm-wc').value=p.wc||'';document.getElementById('pm-due').value=p.due||'';}}
+  openModal('plot-modal');
+}
+function savePlot(){
+  const title=document.getElementById('pm-name').value.trim();if(!title){alert('請輸入標題');return;}
+  const eid=gv('pm-edit-id');
+  const p={id:eid||uid(),title,desc:gv('pm-desc'),chars:gv('pm-chars'),lane:gv('pm-lane'),prio:gv('pm-prio'),target:+document.getElementById('pm-target').value||0,wc:+document.getElementById('pm-wc').value||0,due:gv('pm-due')};
+  if(eid){const i=S.plot.findIndex(x=>x.id===eid);if(i>=0)S.plot[i]=p;else S.plot.push(p);}else S.plot.push(p);
+  save();closeModal('plot-modal');renderPlot();
+}
+function deletePlot(){const id=gv('pm-edit-id');if(!confirm('確定刪除？'))return;S.plot=S.plot.filter(x=>x.id!==id);save();closeModal('plot-modal');renderPlot();}
+let plotDrag=null;
+function renderPlot(){
+  const today=new Date();today.setHours(0,0,0,0);
+  ['idea','draft','wip','done'].forEach(lane=>{
+    const el=document.getElementById('plot-lane-'+lane);
+    const tHtml=el.querySelector('.plot-lt').outerHTML;
+    const cards=S.plot.filter(p=>p.lane===lane);
+    el.innerHTML=tHtml+cards.map(p=>{
+      const hasProg=p.target>0;const pct=hasProg?Math.min(100,Math.round(p.wc/p.target*100)):0;
+      let dueHtml='';
+      if(p.due){const m=p.due.match(/(\d+)\/(\d+)/);if(m){const d=new Date(today.getFullYear(),+m[1]-1,+m[2]);const ov=d<today&&lane!=='done';dueHtml=`<div class="pc-due${ov?' overdue':''}">📅 ${p.due}${ov?' (逾期)':''}</div>`;}}
+      return`<div class="pc" draggable="true" data-sid="${p.id}" data-lane="${p.lane}"><span class="dh" onclick="event.stopPropagation()">${DH}</span>
+        <div class="pc-body" onclick="openPlotModal('${p.id}')">
+          <div class="pc-title">${esc(p.title)}${p.prio?`<span class="pc-prio ${p.prio}">${{high:'高',mid:'中',low:'低'}[p.prio]}</span>`:''}</div>
+          ${p.chars?`<div class="pc-sub">👥 ${esc(p.chars)}</div>`:''}
+          ${p.desc?`<div class="pc-ex">${esc(p.desc)}</div>`:''}
+          ${hasProg?`<div class="pc-prog"><div class="pc-prog-bar" style="width:${pct}%"></div></div><div class="pc-wc">${p.wc} / ${p.target} 字 (${pct}%)</div>`:''}
+          ${dueHtml}
+        </div></div>`;
+    }).join('');
+    const cnt=document.getElementById('plot-cnt-'+lane);
+    if(cnt){cnt.textContent=cards.length?cards.length+'張':'';cnt.style.fontSize='.6rem';cnt.style.color='var(--t3)';}
+  });
+  const container=document.querySelector('.plot-lanes');
+  container.ondragstart=e=>{const c=e.target.closest('[data-sid]');if(!c)return;plotDrag=c;requestAnimationFrame(()=>c.classList.add('is-drag'));e.dataTransfer.effectAllowed='move';};
+  container.ondragend=()=>{if(plotDrag)plotDrag.classList.remove('is-drag');document.querySelectorAll('.pc').forEach(c=>c.classList.remove('drag-above'));document.querySelectorAll('.plot-lane').forEach(l=>l.classList.remove('drag-over'));plotDrag=null;};
+  container.ondragover=e=>{e.preventDefault();const lane=e.target.closest('.plot-lane'),card=e.target.closest('.pc');document.querySelectorAll('.plot-lane').forEach(l=>l.classList.remove('drag-over'));document.querySelectorAll('.pc').forEach(c=>c.classList.remove('drag-above'));if(lane)lane.classList.add('drag-over');if(card&&card!==plotDrag){const b=card.getBoundingClientRect();if(e.clientY<b.top+b.height/2)card.classList.add('drag-above');}};
+  container.ondrop=e=>{e.preventDefault();if(!plotDrag)return;const lane=e.target.closest('.plot-lane'),card=e.target.closest('.pc[data-sid]');document.querySelectorAll('.plot-lane').forEach(l=>l.classList.remove('drag-over'));document.querySelectorAll('.pc').forEach(c=>c.classList.remove('drag-above'));if(!lane)return;const nl=lane.dataset.lane,id=plotDrag.dataset.sid;const pi=S.plot.findIndex(p=>p.id===id);if(pi>=0)S.plot[pi].lane=nl;if(card&&card!==plotDrag)lane.insertBefore(plotDrag,card);else lane.appendChild(plotDrag);const lc=[...lane.querySelectorAll('.pc[data-sid]')].map(c=>c.dataset.sid);const other=S.plot.filter(p=>p.lane!==nl);const lp=lc.map(sid=>S.plot.find(p=>p.id===sid)).filter(Boolean);S.plot=[...other,...lp];save();};
+}
+
+/* CHAPTERS */
+function addChapter(){document.getElementById('chap-edit-id').value='';document.getElementById('chap-modal-title').textContent='新增章節';document.getElementById('chap-del-btn').style.display='none';document.getElementById('chap-name').value='';openModal('chap-modal');}
+function saveChapter2(){
+  const name=document.getElementById('chap-name').value.trim();if(!name){alert('請輸入章節標題');return;}
+  const eid=gv('chap-edit-id');
+  if(eid){const c=S.chapters.find(x=>x.id===eid);if(c)c.name=name;}
+  else{const c={id:uid(),name,content:''};S.chapters.push(c);curChapId=c.id;}
+  save();closeModal('chap-modal');renderChapList();
+}
+function deleteChapter(){
+  const id=gv('chap-edit-id');if(!confirm('確定刪除此章節？'))return;
+  S.chapters=S.chapters.filter(c=>c.id!==id);
+  if(curChapId===id){curChapId=S.chapters[0]?.id||null;document.getElementById('prose-editor').value=S.chapters[0]?.content||'';}
+  save();closeModal('chap-modal');renderChapList();updateTotalWC();
+}
+function selectChap(id){
+  if(curChapId)saveChapterContent();curChapId=id;
+  const c=S.chapters.find(x=>x.id===id);
+  document.getElementById('prose-editor').value=c?c.content||'':'';
+  updateChapWC();renderChapList();
+}
+function saveChapter(){if(!curChapId){alert('請先選擇或新增章節');return;}saveChapterContent();const btn=event.target;btn.textContent='✓ 已儲存';setTimeout(()=>btn.textContent='💾 儲存',1500);}
+function saveChapterContent(){if(!curChapId)return;const c=S.chapters.find(x=>x.id===curChapId);if(c){c.content=document.getElementById('prose-editor').value;save();}}
+const _autoSaveChap=debounce(()=>{if(curChapId)saveChapterContent();},1000);
+function onProseInput(){updateChapWC();_autoSaveChap();}
+function updateChapWC(){const wc=document.getElementById('prose-editor').value.replace(/\s/g,'').length;document.getElementById('cur-chap-wc').textContent=`本章 ${wc} 字`;updateTotalWC();}
+function updateTotalWC(){
+  const curContent=document.getElementById('prose-editor').value;
+  const total=S.chapters.reduce((sum,c)=>{const content=c.id===curChapId?curContent:c.content||'';return sum+content.replace(/\s/g,'').length;},0);
+  document.getElementById('total-wc').textContent=`全文 ${total} 字`;
+}
+function renderChapList(){
+  const list=document.getElementById('chap-list');
+  if(!S.chapters.length){list.innerHTML='<div style="font-size:.78rem;color:var(--t3);padding:.35rem 0">尚無章節，點擊新增</div>';return;}
+  list.innerHTML=S.chapters.map((c,i)=>`<div class="chap-item${c.id===curChapId?' active':''}" draggable="true" data-sid="${c.id}" onclick="selectChap('${c.id}')">
+    <span class="chap-num">Ch.${i+1}</span><span class="chap-name">${esc(c.name)}</span>
+    <span class="chap-wc">${(c.id===curChapId?document.getElementById('prose-editor').value:c.content||'').replace(/\s/g,'').length}字</span>
+    <button class="bi" style="opacity:.6;font-size:.78rem" onclick="event.stopPropagation();editChap('${c.id}')">✏</button>
   </div>`).join('');
+  makeSortList(list,order=>{S.chapters=order.map(id=>S.chapters.find(c=>c.id===id)).filter(Boolean);save();renderChapList();});
+}
+function editChap(id){const c=S.chapters.find(x=>x.id===id);if(!c)return;document.getElementById('chap-edit-id').value=id;document.getElementById('chap-modal-title').textContent='編輯章節';document.getElementById('chap-del-btn').style.display='';document.getElementById('chap-name').value=c.name;openModal('chap-modal');}
+
+/* PROSE TOOLBAR */
+function insertText(before,after){
+  const ta=document.getElementById('prose-editor');const s=ta.selectionStart,e=ta.selectionEnd;
+  const sel=ta.value.slice(s,e);ta.value=ta.value.slice(0,s)+before+sel+after+ta.value.slice(e);
+  ta.selectionStart=s+before.length;ta.selectionEnd=s+before.length+sel.length;ta.focus();onProseInput();
+}
+function setProseFS(v){document.documentElement.style.setProperty('--prose-fs',v);localStorage.setItem('wf6-pfs',v);}
+function setProseLH(v){document.documentElement.style.setProperty('--lh',v);localStorage.setItem('wf6-plh',v);}
+function applyProseFont(v){document.getElementById('prose-editor').style.fontFamily=v;localStorage.setItem('wf6-pfont',v);}
+
+/* SETTINGS */
+function setTheme(t,chip){document.body.dataset.theme=t;localStorage.setItem('wf6-theme',t);document.querySelectorAll('.tchip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');}
+function changeFontSize(d){fsPx=Math.max(12,Math.min(22,fsPx+d));document.documentElement.style.setProperty('--fs',fsPx+'px');localStorage.setItem('wf6-fs',fsPx);document.getElementById('font-size-display').textContent=fsPx+'px';}
+function applyBodyFont(){document.body.style.fontFamily=document.getElementById('body-font').value;}
+
+/* I18N */
+function setLang(lang){localStorage.setItem('wf6-lang',lang);applyLang(lang);}
+function applyLang(lang){const t=LANG[lang]||LANG['zh-TW'];document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(t[k])el.textContent=t[k];});}
+
+/* DATA */
+function exportData(){const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({S,novels,curNovelId},null,2));a.download='worldforge-backup.json';a.click();}
+function importData(){document.getElementById('import-input').click();}
+function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.S)Object.assign(S,d.S);if(d.novels)novels=d.novels;if(d.curNovelId)curNovelId=d.curNovelId;save();renderAll();alert('匯入成功！');}catch(err){alert('匯入失敗');}};r.readAsText(f);e.target.value='';}
+function clearAllData(){if(!confirm('確定清除全部資料？此操作不可逆！'))return;S=DEF();novels=[];curNovelId=null;curChapId=null;save();renderAll();}
+
+/* UTILS */
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function gv(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function updateCounts(){
+  const cc=S.chars.length,mc=S.items.length+S.factions.length+S.terms.length,fc=S.chars.filter(c=>c.fav).length;
+  document.getElementById('char-count').textContent=cc;document.getElementById('fav-count').textContent=fc;
+  document.getElementById('item-count').textContent=S.items.length;document.getElementById('faction-count').textContent=S.factions.length;document.getElementById('term-count').textContent=S.terms.length;
+  document.getElementById('tb-stat').textContent=`角色 ${cc} ｜ 素材 ${mc}`;
 }
 
-/* SIMPLE */
-function openSimpleModal(type,id){
-  document.getElementById('sm-type').value=type;document.getElementById('sm-edit-id').value=id||'';
-  const titles={item:'道具 / 物品',faction:'勢力 / 組織',term:'術語 / 名詞'};
-  document.getElementById('sm-title').textContent=(id?'編輯':'新增')+titles[type];
-  document.getElementById('sm-del-btn').style.display=id?'':'none';
-  document.getElementById('sm-name').value='';document.getElementById('sm-tag').value='';document.getElementById('sm-desc').value='';document.getElementById('sm-cf-list').innerHTML='';
-  if(id){const arr=S[type==='item'?'items':type==='faction'?'factions':'terms'],obj=arr.find(x=>x.id===id);if(obj){document.getElementById('sm-name').value=obj.name||'';document.getElementById('sm-tag').value=obj.tag||'';document.getElementById('sm-desc').value=obj.desc||'';(obj.customFields||[]).forEach(f=>addCFRow(f.key,f.value,'sm-cf-list'));}}
-  openModal('simple-modal');
-}
-function saveSimple(){
-  const type=gv('sm-type'),name=document.getElementById('sm-name').value.trim();if(!name){alert('請輸入名稱');return;}
-  const eid=gv('sm-edit-id');const obj={id:eid||uid(),name,tag:gv('sm-tag'),desc:gv('sm-desc'),customFields:getCF('sm-cf-list')};
-  const key=type==='item'?'items':type==='faction'?'factions':'terms';const arr=S[key];
-  if(eid){const i=arr.findIndex(x=>x.id===eid);if(i>=0)arr[i]=obj;else arr.push(obj);}else arr.push(obj);
-  save();closeModal('simple-modal');renderGrid(type);updateCounts();
-}
-function deleteSimple(){
-  const type=gv('sm-type'),id=gv('sm-edit-id');if(!confirm('確定刪除？'))return;
-  const key=type==='item'?'items':type==='faction'?'factions':'terms';S[key]=S[key].filter(x=>x.id!==id);
-  save();closeModal('simple-modal');renderGrid(type);updateCounts();
-}
-function renderGrid(type){
-  const key=type==='item'?'items':type==='faction'?'factions':'terms';
-  const arr=S[key];const gid=type+'-grid';const grid=document.getElementById(gid);
-  const q=(document.getElementById(type+'-search')||{}).value||'';
-  let filtered=arr;
-  if(q){const lq=q.toLowerCase();filtered=arr.filter(o=>[o.name,o.tag,o.desc].some(v=>v&&v.toLowerCase().includes(lq)));}
-  if(!filtered.length){grid.innerHTML='<div class="empty">'+(!arr.length?'尚無資料，點擊新增':'無符合結果')+'</div>';return;}
-  grid.innerHTML=filtered.map(obj=>`<div class="cc" draggable="true" data-sid="${obj.id}" onclick="openSimpleModal('${type}','${obj.id}')">
-    <span class="cc-dh dh" onclick="event.stopPropagation()" style="position:absolute;right:.45rem;top:.45rem">${DH}</span>
-    <div class="cc-name">${esc(obj.name)}</div>
-    ${obj.tag?`<div class="tags"><span class="tag g">${esc(obj.tag)}</span></div>`:''}
-    ${obj.desc?`<div class="cc-ex">${esc(obj.desc)}</div>`:''}
-  </div>`).join('');
-  if(!q)makeSortGrid(gid,order=>{S[key]=order.map(id=>arr.find(x=>x.id===id)).filter(Boolean);save();});
-}
-
-/* WORLD */
-
+</script>
+</body>
+</html>
