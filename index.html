@@ -289,10 +289,131 @@ hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
 .novel-tab-edit{opacity:0;font-size:.7rem;flex-shrink:0;background:none;border:none;color:var(--t3);cursor:pointer;padding:.1rem .2rem;border-radius:2px}
 .novel-tab:hover .novel-tab-edit{opacity:1}
 .novel-tab-edit:hover{color:var(--gold);background:var(--bghov)}
+
+/* ══════════════════════════════════════
+   MOBILE NAVIGATION OVERLAY
+══════════════════════════════════════ */
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:198}
+.mob-overlay.open{display:block}
+#mob-nav-btn{display:none;background:none;border:none;color:var(--t1);font-size:1.1rem;cursor:pointer;padding:.3rem .45rem;border-radius:var(--r);transition:background .15s;flex-shrink:0}
+#mob-nav-btn:hover{background:var(--bghov)}
+
+/* ══════════════════════════════════════
+   MOBILE: ≤ 700px
+══════════════════════════════════════ */
+@media(max-width:700px){
+  :root{--fs:14px}
+
+  /* Top bar */
+  #topbar{padding:0 .5rem;gap:.45rem}
+  .brand small{display:none}
+  .topbar-stat{font-size:.62rem;padding:.18rem .42rem}
+  #mob-nav-btn{display:flex;align-items:center;justify-content:center}
+
+  /* App shell: sidebar hidden by default, slides in as overlay */
+  #app{position:relative}
+  .gsb-wrap{
+    position:fixed;left:0;top:44px;bottom:0;z-index:199;
+    transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);
+  }
+  .gsb-wrap.mob-open{transform:translateX(0)}
+  .gsb{width:260px;height:100%}
+  .gsb.collapsed{width:260px}
+  /* Override desktop collapse on mobile */
+  .gsb.collapsed .ps-btn span,.gsb.collapsed .sb-lbl,
+  .gsb.collapsed .sb-item span:not(.ico),.gsb.collapsed .sb-badge,
+  .gsb.collapsed .sb-add,.gsb.collapsed .sb-foot,
+  .gsb.collapsed .sb-ctx>*:not(.ps){display:revert}
+  .gsb.collapsed .ps-btn{justify-content:flex-start;padding:.48rem .65rem}
+  .gsb.collapsed .sb-item{justify-content:flex-start;padding:.38rem .8rem;border-left:2px solid transparent}
+  .gsb.collapsed .sub-tab span:not(.stab-ico){display:revert}
+  .gsb.collapsed .sub-tab{justify-content:flex-start;padding:.38rem .8rem}
+  .sb-toggle{display:none}
+
+  /* Content fills full width */
+  .page{width:100vw}
+  .cmain{padding:.9rem .85rem}
+
+  /* Grids: all collapse to single column */
+  .g2,.g3,.g4,.g5{grid-template-columns:1fr}
+  .cgrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+
+  /* Plot board: 2x2 on mobile */
+  .plot-lanes{grid-template-columns:1fr 1fr}
+
+  /* World lore grid */
+  .lore-grid{grid-template-columns:1fr}
+
+  /* Section header wrapping */
+  .sh{gap:.5rem}
+  .sh .row{flex-wrap:wrap;gap:.35rem}
+
+  /* Modals: full screen on mobile */
+  .mbg{padding:.5rem;align-items:flex-end}
+  .mdl{width:100%;max-width:100%;max-height:85vh;border-radius:var(--r) var(--r) 0 0;padding:1.1rem}
+  .mdl-lg{max-width:100%}
+
+  /* Prose toolbar: wrap */
+  .prose-toolbar{flex-wrap:wrap;gap:.25rem}
+  .pt-right{margin-left:0;width:100%;justify-content:flex-start}
+
+  /* Chapter list: more height on mobile */
+  .chap-list{max-height:160px}
+
+  /* Novel switcher tabs */
+  .novel-tab-name{font-size:.75rem}
+
+  /* World tabs: scrollable */
+  .world-tabs{-webkit-overflow-scrolling:touch}
+
+  /* Relation graph: shorter on mobile */
+  #rel-canvas{height:300px}
+
+  /* Map canvas: shorter on mobile */
+  #map-canvas{height:280px}
+
+  /* Tag filter chips: wrap nicely */
+  .tag-filter,.tl-filter{gap:.25rem}
+  .tfc,.tf-chip{font-size:.62rem;padding:.13rem .48rem}
+
+  /* Topbar right: hide save time on mobile */
+  .topbar-save{display:none}
+}
+
+/* ══════════════════════════════════════
+   TABLET: 701px – 960px
+══════════════════════════════════════ */
+@media(min-width:701px) and (max-width:960px){
+  :root{--sb:180px;--fs:14px}
+  .cmain{padding:1.1rem 1.2rem}
+  .g4,.g5{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr}
+  .plot-lanes{grid-template-columns:1fr 1fr}
+  .cgrid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  .mdl{max-width:95%}
+}
+
+/* ══════════════════════════════════════
+   TOUCH IMPROVEMENTS (all sizes)
+══════════════════════════════════════ */
+@media(hover:none){
+  /* Larger tap targets */
+  .bi{padding:.4rem}
+  .btn{padding:.45rem .9rem}
+  .bs{padding:.35rem .7rem}
+  .sb-item{padding:.5rem .8rem}
+  .sub-tab{padding:.5rem .8rem}
+  .cc-fav{font-size:1rem;padding:.2rem}
+  /* Always show drag handle (not just on hover) */
+  .cc-dh{opacity:.5}
+  /* Remove hover-only states that don't work on touch */
+  .cc::before{transform:scaleY(1)}
+}
 </style>
 </head>
 <body data-theme="dark">
 <div id="topbar">
+  <button id="mob-nav-btn" onclick="toggleMobNav()" aria-label="選單">☰</button>
   <div class="brand">世界鑄造所 <small>WorldForge</small></div>
   <div class="topbar-spacer"></div>
   <div class="topbar-right">
@@ -300,6 +421,7 @@ hr.sep{border:none;border-top:1px solid var(--bdr);margin:1.1rem 0}
     <div class="topbar-stat" id="tb-stat">角色 0 ｜ 素材 0</div>
   </div>
 </div>
+<div class="mob-overlay" id="mob-overlay" onclick="closeMobNav()"></div>
 <div id="app">
 <div class="gsb-wrap">
 <nav class="gsb" id="gsb">
@@ -1859,6 +1981,30 @@ function exportData(){const a=document.createElement('a');a.href='data:applicati
 function importData(){document.getElementById('import-input').click();}
 function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.S)Object.assign(S,d.S);if(d.novels)novels=d.novels;if(d.curNovelId)curNovelId=d.curNovelId;save();renderAll();alert('匯入成功！');}catch(err){alert('匯入失敗');}};r.readAsText(f);e.target.value='';}
 function clearAllData(){if(!confirm('確定清除全部資料？此操作不可逆！'))return;S=DEF();novels=[];curNovelId=null;curChapId=null;save();renderAll();}
+
+/* MOBILE NAV */
+function toggleMobNav(){
+  const wrap=document.getElementById('gsb').parentElement;
+  const overlay=document.getElementById('mob-overlay');
+  const isOpen=wrap.classList.toggle('mob-open');
+  overlay.classList.toggle('open',isOpen);
+  document.body.style.overflow=isOpen?'hidden':'';
+}
+function closeMobNav(){
+  const wrap=document.getElementById('gsb').parentElement;
+  document.getElementById('mob-overlay').classList.remove('open');
+  wrap.classList.remove('mob-open');
+  document.body.style.overflow='';
+}
+// Close nav when a sidebar item is clicked on mobile
+document.addEventListener('click',e=>{
+  const isMobile=window.innerWidth<=700;
+  if(!isMobile)return;
+  const sidebarItem=e.target.closest('.sb-item,.sub-tab,.ps-btn,.sb-add');
+  if(sidebarItem&&document.getElementById('gsb').parentElement.classList.contains('mob-open')){
+    setTimeout(closeMobNav,150);
+  }
+});
 
 /* UTILS */
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
